@@ -1,0 +1,4 @@
+github.com/BurntSushi/toml v0.4.1 h1:GaI7EiDXDRfa8VshkTj7Fym7ha+y8/XxIgD2okUIjLw=
+github.com/BurntSushi/toml v0.4.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
+github.com/mattn/go-xmpp v0.0.0-20210723025538-3871461df959 h1:heUerLk4jOhweir4OqSGDUZueo9dRRtBcglPB44XRYY=
+github.com/mattn/go-xmpp v0.0.0-20210723025538-3871461df959/go.mod h1:Cs5mF0OsrRRmhkyOod//ldNPOwJsrBvJ+1WRspv0xoc=

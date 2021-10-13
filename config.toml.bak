@@ -1,0 +1,6 @@
+[DEFAULT]
+HOST = ""
+LOGIN = ""
+PASSWORD = ""
+
+DEBUG = true
