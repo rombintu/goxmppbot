@@ -14,26 +14,31 @@ type Default struct {
 	Login      string // `toml:LOGIN`
 	Password   string // `toml:PASSWORD`
 	DebugLevel string
-	DebugON    bool // `toml:DEBUG`
+	DebugON    bool
+}
+
+type Support struct {
+	Host         string
+	Port         string
+	Login        string
+	Password     string
+	SupportEmail string //`toml:SUPPORT_EMAIL`
 }
 
 type Config struct {
 	Default Default
+	Support Support
+	Links   map[string]string
 }
 
-// type Data struct {
-// 	Host     string
-// 	Login    string
-// 	Password string
-// 	Debug    bool
-// }
-
+// Struct BOT
 type Bot struct {
 	Client *xmpp.Client
 	Config *Config
 	Logger *logrus.Logger
 }
 
+// Return configuration
 func GetConfig() *Config {
 	confFile, err := os.ReadFile("config.toml")
 	if err != nil {
@@ -49,6 +54,7 @@ func GetConfig() *Config {
 	return &conf
 }
 
+// Return new bot
 func NewBot() *Bot {
 	return &Bot{
 		Config: GetConfig(),
@@ -67,10 +73,12 @@ func (bot *Bot) configureLogger() error {
 	return nil
 }
 
-func (bot *Bot) Connect() {
+// Try connect to server
+func (bot *Bot) Connect() error {
 	err := bot.configureLogger()
 	if err != nil {
 		bot.Logger.Error("Error configure logger: ", err.Error())
+		return err
 	}
 	client, err := xmpp.NewClientNoTLS(
 		bot.Config.Default.Host,
@@ -80,6 +88,8 @@ func (bot *Bot) Connect() {
 	)
 	if err != nil {
 		bot.Logger.Error("Error connect: ", err.Error())
+		return err
 	}
 	bot.Client = client
+	return nil
 }

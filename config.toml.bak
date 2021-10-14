@@ -4,3 +4,18 @@ LOGIN = ""
 PASSWORD = ""
 DEBUGLEVEL = "debug" # [debug, info]
 DEBUG = true
+
+[SUPPORT]
+HOST = ""
+PORT = "smtp"
+LOGIN = ""
+PASSWORD = ""
+SUPPORT_EMAIL = ""
+
+[LINKS]
+sep = "http://it.mvd.ru/sections/4#questions"
+sed = "http://it.mvd.ru/2#questions"
+svks-m = "http://it.mvd.ru/sections/41#questions"
+sudis = "http://it.mvd.ru/%D0%BF%D0%BE%D0%B8%D0%B1#questions"
+visp = "http://it.mvd.ru/sections/29#questions"
+site = "http://it.mvd.ru/sections/61"

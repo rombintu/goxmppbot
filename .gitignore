@@ -1,4 +1,9 @@
 # Trash
+.vscode
 
 # Private
 config.toml
+
+# Bin
+main
+*.exe
