@@ -1,8 +1,10 @@
 package bot
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	xmpp "github.com/mattn/go-xmpp"
 )
@@ -47,11 +49,66 @@ func (bot *Bot) SendORG(chat xmpp.Chat) {
 	}
 }
 
+// Action on /start
+func OnStart() string {
+	var submess string
+	t := time.Now()
+	switch {
+	case t.Hour() < 12:
+		submess = "Доброе утро"
+	case t.Hour() < 17:
+		submess = "Добрый день"
+	default:
+		submess = "Добрый вечер"
+	}
+	return submess + ", напишите название сервиса по которому у вас возник вопрос"
+}
+
+// Action on /help
+func OnHelp() string {
+	return "\nСервисы [с] - Вывести ссылки на ответы по сервисам\nПоддержка - Написать письмо в поддержку"
+}
+
+// Validate message for support mail
+func ValidateSupport(message []string) error {
+	// support:subject body
+	size := len(message)
+	// var subject, body string
+	err := errors.New("Пример запроса должен быть типа: support:subject body")
+	if size < 2 && message[0] != "support" || message[0] != "поддержка" {
+		return err
+	} else {
+		inner := strings.Split(message[1], " ")
+		if len(inner) < 2 {
+			return err
+		}
+	}
+	return nil
+}
+
+// Parse subject and message body from user text
+func ParseSubjectAndBody(message []string) []string {
+	// support:subject body
+	var subject, body string
+	inner := strings.Split(message[1], " ")
+	subject = inner[0]
+	body = strings.Join(inner[1:], " ")
+	return []string{subject, body}
+}
+
+// Action on /support. Send mail to support
+func (bot *Bot) OnSupport(subject, body string) (string, error) {
+	if err := bot.SendToSupport(subject, body); err != nil {
+		bot.Logger.Error(err)
+		return "", err
+	}
+	return "Ваша заявка отправлена в обработку", nil
+}
+
 // Loop func, listening command from users
 func (bot *Bot) HandleMessage() error {
 
 	for {
-		//
 		data, err := bot.Client.Recv()
 		if err != nil {
 			return err
@@ -62,15 +119,25 @@ func (bot *Bot) HandleMessage() error {
 			mess := CreateMessage()
 			mess.Remote = data.(xmpp.Chat).Remote
 			mess.Subject = "bothelper"
-			switch strings.ToLower(data.(xmpp.Chat).Text) {
+
+			userText := strings.ToLower(data.(xmpp.Chat).Text)
+			forSupport := strings.Split(userText, ":")
+			if err := ValidateSupport(forSupport); err == nil {
+				emailData := ParseSubjectAndBody(forSupport)
+				resp, err := bot.OnSupport(emailData[0], emailData[1])
+				if err != nil {
+					mess.Text = "Произошла внутренняя ошибка: " + err.Error()
+					continue
+				}
+				mess.Text = resp
+				bot.SendMessage(mess)
+				continue
+			}
+			switch userText {
 			case "/start", "start", "старт":
-				mess.Text = "Привет, напишите название сервиса по которому у вас возник вопрос"
+				mess.Text = OnStart()
 			case "/помощь", "помощь", "п", "help", "/help":
-				mess.Text = "\nСервисы [с] - Вывести ссылки на ответы по сервисам\nПоддержка - Написать письмо в поддержку"
-			// case "сэп":
-			// 	mess.Text = "http://it.mvd.ru/sections/4#questions"
-			// case "календарь":
-			// 	mess.Text = "Выберите из списка:\n1. ...\n2. ... \n3. ...\n4. Прочее"
+				mess.Text = OnHelp()
 			case "list", "лист", "сервисы", "сервис", "с":
 				buff := ""
 				for key, value := range bot.Config.Links {
@@ -78,13 +145,13 @@ func (bot *Bot) HandleMessage() error {
 				}
 				mess.Text = buff
 			case "поддержка":
-				subject := "botThemeTest"
-				bodyMessage := "bodyBotTest"
-				err := bot.SendToSupport(subject, bodyMessage)
+				response, err := bot.OnSupport("", "")
 				if err != nil {
-					bot.Logger.Error(err)
+					mess.Text = fmt.Sprint("Произошла ошибка: ", err.Error())
+					bot.SendMessage(mess)
+					continue
 				}
-				mess.Text = "Отправлено!"
+				mess.Text = response
 			default:
 				mess.Text = "Неверный ввод, попробуйте ввести команду /help или помощь."
 			}
