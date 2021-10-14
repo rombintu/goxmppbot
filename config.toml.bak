@@ -2,5 +2,5 @@
 HOST = ""
 LOGIN = ""
 PASSWORD = ""
-
+DEBUGLEVEL = "debug" # [debug, info]
 DEBUG = true
