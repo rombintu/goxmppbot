@@ -1,9 +1,28 @@
 package bot
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
 	"net/smtp"
 )
+
+func encodeToBase64(msg []byte) []byte {
+	var buff bytes.Buffer
+	encoder := base64.NewEncoder(base64.StdEncoding, &buff)
+	encoder.Write(msg)
+	defer encoder.Close()
+	return buff.Bytes()
+}
+
+// func encodeToUTF8(msg string) []int {
+// 	buff := make([]byte, len(msg))
+// 	var encodeMess []int
+// 	for _, r := range msg {
+// 		encodeMess = append(encodeMess, utf8.EncodeRune(buff, r))
+// 	}
+// 	return encodeMess
+// }
 
 func (bot *Bot) SendToSupport(subject, body string) error {
 	// Set up authentication information.
@@ -29,7 +48,7 @@ func (bot *Bot) SendToSupport(subject, body string) error {
 		auth,
 		fmt.Sprintf("%s@%s", bot.Config.Support.Login, bot.Config.Support.Host),
 		to,
-		msg,
+		encodeToBase64(msg),
 	); err != nil {
 		return err
 	}
