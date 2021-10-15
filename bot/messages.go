@@ -139,7 +139,8 @@ func (bot *Bot) HandleMessage() error {
 			userText := data.(xmpp.Chat).Text
 			forSupport := ValidateSupport(userText)
 			if forSupport {
-				emailData := strings.Split(userText, ":")
+				dryData := strings.Split(userText, ":")
+				emailData := ParseSubjectAndBody(dryData)
 				resp, err := bot.OnSupport(from, emailData[0], emailData[1])
 				if err != nil {
 					bot.Logger.Error(err)
