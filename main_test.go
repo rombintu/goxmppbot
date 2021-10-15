@@ -19,7 +19,7 @@ func TestSendToSupport(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err := bot.SendToSupport("СУДИС", "тело текста -- тест test $#$FDF"); err != nil {
+	if err := bot.SendToSupport("test@test.ru", "СУДИС", "тело текста -- тест test $#$FDF"); err != nil {
 		t.Error(err)
 	}
 }

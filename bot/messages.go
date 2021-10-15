@@ -110,8 +110,8 @@ func ParseSubjectAndBody(message []string) []string {
 }
 
 // Action on /support. Send mail to support
-func (bot *Bot) OnSupport(subject, body string) (string, error) {
-	if err := bot.SendToSupport(subject, body); err != nil {
+func (bot *Bot) OnSupport(user, subject, body string) (string, error) {
+	if err := bot.SendToSupport(user, subject, body); err != nil {
 		bot.Logger.Error(err)
 		return "", err
 	}
@@ -130,14 +130,17 @@ func (bot *Bot) HandleMessage() error {
 		switch data.(type) {
 		case xmpp.Chat:
 			mess := CreateMessage()
-			mess.Remote = data.(xmpp.Chat).Remote
+			from := data.(xmpp.Chat).Remote
+
+			mess.Remote = from
+			// Theme for Chat (not email)
 			mess.Subject = "bothelper"
 
 			userText := data.(xmpp.Chat).Text
 			forSupport := ValidateSupport(userText)
 			if forSupport {
 				emailData := strings.Split(userText, ":")
-				resp, err := bot.OnSupport(emailData[0], emailData[1])
+				resp, err := bot.OnSupport(from, emailData[0], emailData[1])
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = "Произошла внутренняя ошибка: " + err.Error()

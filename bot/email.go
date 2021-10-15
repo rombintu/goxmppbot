@@ -5,26 +5,38 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/smtp"
+	"strings"
 )
 
-func encodeToBase64(msg []byte) []byte {
-	var buff bytes.Buffer
-	encoder := base64.NewEncoder(base64.StdEncoding, &buff)
-	encoder.Write(msg)
-	defer encoder.Close()
-	return buff.Bytes()
+type Mail struct {
+	Subject string
+	From    string
+	To      []string
+	Body    []byte
 }
 
-// func encodeToUTF8(msg string) []int {
-// 	buff := make([]byte, len(msg))
-// 	var encodeMess []int
-// 	for _, r := range msg {
-// 		encodeMess = append(encodeMess, utf8.EncodeRune(buff, r))
-// 	}
-// 	return encodeMess
-// }
+func BuildMail(mail Mail) []byte {
 
-func (bot *Bot) SendToSupport(subject, body string) error {
+	var buf bytes.Buffer
+
+	buf.WriteString(fmt.Sprintf("From: %s\r\n", mail.From))
+	buf.WriteString(fmt.Sprintf("To: %s\r\n", strings.Join(mail.To, ";")))
+	buf.WriteString(fmt.Sprintf("Subject: %s\r\n", mail.Subject))
+
+	buf.WriteString("MIME-Version: 1.0\r\n")
+	buf.WriteString("Content-Type: text/plain; charset=\"utf-8\"\r\n")
+	buf.WriteString("Content-Transfer-Encoding: base64\r\n")
+
+	b := make([]byte, base64.StdEncoding.EncodedLen(len(mail.Body)))
+	base64.StdEncoding.Encode(b, mail.Body)
+	buf.Write(b)
+
+	buf.WriteString("--")
+
+	return buf.Bytes()
+}
+
+func (bot *Bot) SendToSupport(user, subject, body string) error {
 	// Set up authentication information.
 	auth := smtp.PlainAuth(
 		"",
@@ -36,19 +48,22 @@ func (bot *Bot) SendToSupport(subject, body string) error {
 	// Connect to the server, authenticate, set the sender and recipient,
 	// and send the email all in one step.
 	to := []string{bot.Config.Support.SupportEmail}
-	msg := []byte(fmt.Sprintf(
-		"To: %s\r\nSubject: %s\r\n\r\n%s.\r\n",
-		bot.Config.Support.SupportEmail,
-		subject,
-		body,
-	),
-	)
+
+	mail := Mail{
+		Subject: subject,
+		From:    fmt.Sprintf("%s@%s", bot.Config.Support.Login, bot.Config.Support.Host),
+		To:      to,
+		Body:    []byte(body + fmt.Sprintf("\n\nСообщение отправлено от: %s", user)),
+	}
+
+	message := BuildMail(mail)
+
 	if err := smtp.SendMail(
 		fmt.Sprintf("%s:%s", bot.Config.Support.Host, bot.Config.Support.Port),
 		auth,
 		fmt.Sprintf("%s@%s", bot.Config.Support.Login, bot.Config.Support.Host),
 		to,
-		encodeToBase64(msg),
+		message,
 	); err != nil {
 		return err
 	}

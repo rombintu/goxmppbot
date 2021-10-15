@@ -1,6 +1,6 @@
 # Trash
 .vscode
-
+*.tar.*
 # Private
 config.toml
 
