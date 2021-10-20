@@ -69,23 +69,6 @@ func OnHelp() string {
 	return "Сервисы [сокращенно 'с'] - Вывести ссылки на ответы по сервисам\nПоддержка - Помогу написать письмо в поддержку"
 }
 
-// // Validate message for support mail
-// func ValidateSupport(message []string) error {
-// 	// support:subject body
-// 	size := len(message)
-// 	// var subject, body string
-// 	err := errors.New("Пример запроса должен быть типа: support:subject body")
-// 	if size < 2 && message[0] != "support" || message[0] != "поддержка" {
-// 		return err
-// 	} else {
-// 		inner := strings.Split(message[1], " ")
-// 		if len(inner) < 2 {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
-
 // Validate message for support mail
 func ValidateSupport(message string) bool {
 	data := strings.Split(message, ":")
