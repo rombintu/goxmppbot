@@ -148,8 +148,10 @@ func (bot *Bot) HandleMessage() error {
 				mess.Text = buff
 			case "поддержка":
 				mess.Text = "Напишите свое обращение такого вида:\n\tПоддержка:НАЗВАНИЕ_СЕРВИСА письмо\n\nПример: Поддержка:СУДИС Все сломалось, помогите"
+			case "":
+				continue
 			default:
-				mess.Text = "Неверный ввод, попробуйте ввести команду /help или помощь."
+				mess.Text = "Неверный ввод, попробуйте ввести команду [help] или [помощь]."
 			}
 			bot.SendMessage(mess)
 		}

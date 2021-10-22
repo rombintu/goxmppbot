@@ -23,3 +23,13 @@ func TestSendToSupport(t *testing.T) {
 		t.Error(err)
 	}
 }
+func TestSendToSupportManySymbols(t *testing.T) {
+	bot := xmppbot.NewBot()
+	err := bot.Connect()
+	if err != nil {
+		t.Error(err)
+	}
+	if err := bot.SendToSupport("test@test.ru", "СУДИС", "gsdfffffffffffffffffffffffgdfsgdfgsdfgdsfgsdfgfdshfghfdggggggggggggggggggggggggggggggggggggggggggggggghgsfhsfghfghdfhfghfg"); err != nil {
+		t.Error(err)
+	}
+}
