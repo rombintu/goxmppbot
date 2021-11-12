@@ -66,7 +66,11 @@ func OnStart() string {
 
 // Action on /help
 func OnHelp() string {
-	return "Сервисы [сокращенно 'с'] - Вывести ссылки на ответы по сервисам\nПоддержка - Помогу написать письмо в поддержку"
+	return `
+Сервисы [сокращенно 'с'] - Вывести ссылки на ответы по сервисам
+Поддержка - Помогу написать письмо в поддержку
+Поиск - Помогу найти колег
+	`
 }
 
 // Validate message for support mail
@@ -76,6 +80,19 @@ func ValidateSupport(message string) bool {
 		return false
 	}
 	matched, err := regexp.MatchString(`^[п|П]оддержка:[А-ЯЁ]+ [a-яА-ЯёЁ ]*`, message)
+	if err != nil {
+		return false
+	}
+	return matched
+}
+
+// Validate message for support mail
+func ValidateSearch(message string) bool {
+	data := strings.Split(message, ":")
+	if len(data) < 2 {
+		return false
+	}
+	matched, err := regexp.MatchString(`^[п|П]оиск:[\wа-яА-ЯЁ\s]+`, message)
 	if err != nil {
 		return false
 	}
@@ -121,6 +138,7 @@ func (bot *Bot) HandleMessage() error {
 
 			userText := data.(xmpp.Chat).Text
 			forSupport := ValidateSupport(userText)
+			forSearch := ValidateSearch(userText)
 			if forSupport {
 				dryData := strings.Split(userText, ":")
 				emailData := ParseSubjectAndBody(dryData)
@@ -131,6 +149,25 @@ func (bot *Bot) HandleMessage() error {
 					continue
 				}
 				mess.Text = resp
+				bot.SendMessage(mess)
+				continue
+			}
+
+			if forSearch {
+				dryData := strings.Split(userText, ":")
+				data := dryData[1]
+				resp, err := GetUserByRegex(data, bot.Config.Contacts.Url)
+				if err != nil {
+					bot.Logger.Error(err)
+					mess.Text = "Произошла внутренняя ошибка: " + err.Error()
+					continue
+				}
+				if len(resp) == 0 {
+					mess.Text = "Ничего не найдено"
+					bot.SendMessage(mess)
+					continue
+				}
+				mess.Text = BuildMessageFromUsers(resp)
 				bot.SendMessage(mess)
 				continue
 			}
@@ -147,7 +184,18 @@ func (bot *Bot) HandleMessage() error {
 				}
 				mess.Text = buff
 			case "поддержка":
-				mess.Text = "Напишите свое обращение такого вида:\n\tПоддержка:НАЗВАНИЕ_СЕРВИСА письмо\n\nПример: Поддержка:СУДИС Все сломалось, помогите"
+				mess.Text = `
+Напишите свое обращение такого вида:
+Поддержка:НАЗВАНИЕ_СЕРВИСА письмо
+	Пример: Поддержка:СУДИС Все сломалось, помогите
+			`
+			case "поиск":
+				mess.Text = `
+Напишите свое обращение такого вида:
+Поиск:запрос письмо
+Примечание: можно использовать регулярные выражения
+	Пример: Поиск:Сергей
+			`
 			case "":
 				continue
 			default:

@@ -1,6 +1,6 @@
 [DEFAULT]
-HOST = ""
-LOGIN = ""
+HOST = "xmpp.leaguemail.ru"
+LOGIN = "user2@xmpp.leaguemail.ru"
 PASSWORD = ""
 DEBUGLEVEL = "debug" # [debug, info]
 DEBUG = true

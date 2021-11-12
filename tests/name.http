@@ -6,7 +6,7 @@ POST https://mail.leaguemail.ru/contacts HTTP/1.1
 # Content-Type: text/xml;charset=UTF-8
 
 <XIMSS>
-    <listDirectory limit="4" filter="(|(mail=a*))" id="66">
+    <listDirectory limit="4" filter="(|(mail=21*))" id="66">
         <field>cn</field>
         <field>mail</field>
         <field>o</field>
