@@ -1,14 +1,10 @@
 package bot
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"io"
-	"log"
 	"net/smtp"
-	"os"
 	"strings"
 )
 
@@ -20,9 +16,38 @@ type Mail struct {
 	Body      []byte
 }
 
-func splitBytesToBlocks(body []byte) ([]byte, error) {
-	return body, nil
+func splitBytesToBlocks(body []byte) []byte {
+	var buf bytes.Buffer
+	counter := 0
+	for _, b := range body {
+		buf.WriteByte(b)
+		counter += 1
+		if counter == 73 {
+			buf.Write([]byte("\r\n"))
+			counter = 0
+		}
+	}
+	return buf.Bytes()
 }
+
+// func splitBytesToBlocks(body []byte) []byte {
+// 	var buf bytes.Buffer
+// 	countBlock := len(body)/72 + 1
+// 	maxBlock := 72
+// 	minBlock := 0
+// 	for countBlock > 0 {
+// 		if maxBlock > len(body)+countBlock*2 {
+// 			buf.Write(body[minBlock:])
+// 			break
+// 		}
+// 		buf.Write(body[:maxBlock])
+// 		buf.Write([]byte("\r\n"))
+// 		countBlock -= 1
+// 		minBlock = maxBlock
+// 		maxBlock += 75
+// 	}
+// 	return buf.Bytes()
+// }
 
 func wrapBase64(m []byte) []byte {
 	b := make([]byte, base64.StdEncoding.EncodedLen(len(m)))
@@ -46,38 +71,27 @@ func BuildMail(mail Mail) []byte {
 	buf.WriteString(fmt.Sprintf("Message-id: <%s>\r\n", mail.MessageID))
 
 	// body := wrapBase64(mail.Body)
-	body, err := splitBytesToBlocks(wrapBase64([]byte(mail.Body)))
-	if err != nil {
-		log.Println(err)
-	}
+	body := splitBytesToBlocks(wrapBase64([]byte(mail.Body)))
+	// if err != nil {
+	// 	log.Println(err)
+	// }
 	buf.Write(body)
 
 	return buf.Bytes()
 }
 
-func splitStringsToBlocks(body string) ([]byte, error) {
-	n := 72 // 72 symbols
-	b := new(bytes.Buffer)
-	r := bufio.NewReader(b)
-	buf := make([]byte, 0, n)
-	for {
-		n, err := io.ReadFull(r, buf[:cap(buf)])
-		buf = buf[:n]
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			if err != io.ErrUnexpectedEOF {
-				fmt.Fprintln(os.Stderr, err)
-				break
-			}
+func splitStringsToBlocks(body string) []byte {
+	var buf bytes.Buffer
+	counter := 0
+	for _, r := range body {
+		buf.WriteRune(r)
+		counter += 1
+		if counter == 73 {
+			buf.Write([]byte("\r\n"))
+			counter = 0
 		}
-		prefix := []byte("\r\n")
-		buf = append(buf, prefix...)
 	}
-	prefix := []byte("\r\n")
-	buf = append(buf, prefix...)
-	return buf, nil
+	return buf.Bytes()
 }
 
 func (bot *Bot) SendToSupport(user, subject, body string) error {
@@ -92,7 +106,7 @@ func (bot *Bot) SendToSupport(user, subject, body string) error {
 	// Connect to the server, authenticate, set the sender and recipient,
 	// and send the email all in one step.
 	to := []string{bot.Config.Support.SupportEmail}
-	// splitBody, err := splitStringsToBlocks(body + fmt.Sprintf("\nСообщение отправлено от: %s", user))
+	// splitBody := splitStringsToBlocks(body + fmt.Sprintf("\nСообщение отправлено от: %s", user))
 	// if err != nil {
 	// 	return err
 	// }
@@ -102,7 +116,7 @@ func (bot *Bot) SendToSupport(user, subject, body string) error {
 		From:      fmt.Sprintf("%s@%s", bot.Config.Support.Login, bot.Config.Support.Host),
 		To:        to,
 		Body:      []byte(body + fmt.Sprintf("\n\nСообщение отправлено от: %s", user)),
-		// Body:      splitBody,
+		// Body: splitBody,
 	}
 
 	message := BuildMail(mail)

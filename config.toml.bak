@@ -12,6 +12,9 @@ LOGIN = ""
 PASSWORD = ""
 SUPPORTEMAIL = ""
 
+[CONTACTS]
+URL = "https://mail.leaguemail.ru/contacts"
+
 [LINKS]
 sep = "CЭП - http://it.mvd.ru/sections/4#questions"
 sed = "СЭД - http://it.mvd.ru/2#questions"

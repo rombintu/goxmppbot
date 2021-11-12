@@ -25,10 +25,15 @@ type Support struct {
 	SupportEmail string //`toml:SUPPORT_EMAIL`
 }
 
+type Contacts struct {
+	Url string
+}
+
 type Config struct {
-	Default Default
-	Support Support
-	Links   map[string]string
+	Default  Default
+	Support  Support
+	Contacts Contacts
+	Links    map[string]string
 }
 
 // Struct BOT
