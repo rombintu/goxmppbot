@@ -1,7 +1,6 @@
-FROM alpine:latest
-RUN apk update && apk add go vim git
-RUN git clone https://github.com/rombintu/goxmppbot.git
-WORKDIR /goxmppbot
-COPY ./config.toml /goxmppbot/config.toml
-RUN go build main.go
+FROM alpine:3.14
+RUN apk update && apk add go vim git make
+WORKDIR /bot
+COPY . .
+RUN make build
 CMD ["./main"]
