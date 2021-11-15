@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetUserByID(t *testing.T) {
-	data, err := bot.GetUserByRegex("ashetukhin*", "https://mail.leaguemail.ru/contacts")
+	data, err := bot.GetUserByRegex("ashetukhin*", "https://mail.leaguemail.ru/contacts", "10")
 	if err != nil {
 		t.Fatal(err)
 	}

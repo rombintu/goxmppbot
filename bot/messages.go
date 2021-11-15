@@ -109,6 +109,10 @@ func ParseSubjectAndBody(message []string) []string {
 	return []string{subject, body}
 }
 
+func TrimS(message string) string {
+	return strings.Trim(message, " ")
+}
+
 // Action on /support. Send mail to support
 func (bot *Bot) OnSupport(user, subject, body string) (string, error) {
 	if err := bot.SendToSupport(user, subject, body); err != nil {
@@ -157,8 +161,15 @@ func (bot *Bot) HandleMessage() error {
 				mess.Text = "Выполняется..."
 				bot.SendMessage(mess)
 				dryData := strings.Split(userText, ":")
-				data := strings.Trim(dryData[1], " ")
-				resp, err := GetUserByRegex(data, bot.Config.Contacts.Url)
+				count := "5"
+
+				data := strings.ToLower(TrimS(dryData[1]))
+
+				if len(dryData) > 2 {
+					count = TrimS(dryData[2])
+				}
+
+				resp, err := GetUserByRegex(data, bot.Config.Contacts.Url, count)
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = "Произошла внутренняя ошибка: " + err.Error()
@@ -194,9 +205,12 @@ func (bot *Bot) HandleMessage() error {
 			case "поиск":
 				mess.Text = `
 Напишите свое обращение такого вида:
-Поиск:запрос письмо
-Примечание: можно использовать регулярные выражения
-	Пример: Поиск: мвд
+Поиск: ФИО_ПОЧТА_ДОЛЖНОСТЬ_КОМПАНИЯ
+Примечание: Можно использовать регулярные выражения
+Примечание: Добавьте в конце *: N*, чтобы регулировать выборку
+	1. Пример: *Поиск: Иванов*
+	2. Пример: *Поиск: Иванов: 10*
+	3. Пример: *Поиск: ivanov*
 			`
 			case "":
 				continue

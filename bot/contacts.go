@@ -35,7 +35,7 @@ type XMLBODY struct {
 
 const xmlbody = `
 <XMLBODY>
-	<listDirectory limit="5" filter="(|(mail=*%s*))" id="%s">
+	<listDirectory limit="%s" filter="(|(mail=*%s*))" id="%s">
 		<field>cn</field>
 		<field>mail</field>
 		<field>o</field>
@@ -62,12 +62,12 @@ func BuildMessageFromUsers(users []TrueUser) string {
 	return buff
 }
 
-func buildXML(mail string) string {
-	return fmt.Sprintf(xmlbody, mail, TimeStamp())
+func buildXML(mail, count string) string {
+	return fmt.Sprintf(xmlbody, count, mail, TimeStamp())
 }
 
-func GetUserByRegex(regex, url string) ([]TrueUser, error) {
-	resp, err := http.Post(url, "text/xml", strings.NewReader(buildXML(regex)))
+func GetUserByRegex(regex, url, count string) ([]TrueUser, error) {
+	resp, err := http.Post(url, "text/xml", strings.NewReader(buildXML(regex, count)))
 	if err != nil {
 		return []TrueUser{}, err
 	}
