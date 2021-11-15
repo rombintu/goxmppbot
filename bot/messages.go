@@ -154,8 +154,10 @@ func (bot *Bot) HandleMessage() error {
 			}
 
 			if forSearch {
+				mess.Text = "Выполняется..."
+				bot.SendMessage(mess)
 				dryData := strings.Split(userText, ":")
-				data := dryData[1]
+				data := strings.Trim(dryData[1], " ")
 				resp, err := GetUserByRegex(data, bot.Config.Contacts.Url)
 				if err != nil {
 					bot.Logger.Error(err)
@@ -194,7 +196,7 @@ func (bot *Bot) HandleMessage() error {
 Напишите свое обращение такого вида:
 Поиск:запрос письмо
 Примечание: можно использовать регулярные выражения
-	Пример: Поиск:Сергей
+	Пример: Поиск: мвд
 			`
 			case "":
 				continue
