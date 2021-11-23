@@ -29,6 +29,11 @@ type Contacts struct {
 	Url string
 }
 
+type ConfigDB struct {
+	Connection string
+	DebugON    bool
+}
+
 type Config struct {
 	Default  Default
 	Support  Support
@@ -38,9 +43,10 @@ type Config struct {
 
 // Struct BOT
 type Bot struct {
-	Client *xmpp.Client
-	Config *Config
-	Logger *logrus.Logger
+	Client  *xmpp.Client
+	Config  *Config
+	Logger  *logrus.Logger
+	Backend *Backend
 }
 
 // Return configuration
