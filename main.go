@@ -10,7 +10,11 @@ func main() {
 	bot := xmppbot.NewBot()
 	err := bot.Connect()
 	if err != nil {
+		bot.Logger.Error(err)
 		os.Exit(1)
 	}
-	bot.HandleMessage()
+	if err := bot.HandleMessage(); err != nil {
+		bot.Logger.Error(err)
+		os.Exit(1)
+	}
 }

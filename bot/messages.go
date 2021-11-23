@@ -219,5 +219,8 @@ func (bot *Bot) HandleMessage() error {
 			}
 			bot.SendMessage(mess)
 		}
+		if err := bot.HandleMessage(); err != nil {
+			return err
+		}
 	}
 }
