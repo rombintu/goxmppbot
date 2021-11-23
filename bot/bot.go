@@ -29,16 +29,17 @@ type Contacts struct {
 	Url string
 }
 
-type ConfigDB struct {
+type BackendConf struct {
 	Connection string
-	DebugON    bool
+	DebugON    bool `toml:"DEBUG"`
 }
 
 type Config struct {
-	Default  Default
-	Support  Support
-	Contacts Contacts
-	Links    map[string]string
+	Default     Default           `toml:"DEFAULT"`
+	Support     Support           `toml:"SUPPORT"`
+	Contacts    Contacts          `toml:"CONTACTS"`
+	BackendConf BackendConf       `toml:"BACKENDCONF"`
+	Links       map[string]string `toml:"LINKS"`
 }
 
 // Struct BOT
@@ -81,6 +82,14 @@ func (bot *Bot) configureLogger() error {
 
 	bot.Logger.SetLevel(level)
 
+	return nil
+}
+
+func (bot *Bot) ConfigureBackand() error {
+	bot.Backend = NewBackend(bot.Config.BackendConf)
+	if err := bot.Backend.Init(); err != nil {
+		return err
+	}
 	return nil
 }
 

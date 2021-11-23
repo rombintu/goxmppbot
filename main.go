@@ -8,8 +8,11 @@ import (
 
 func main() {
 	bot := xmppbot.NewBot()
-	err := bot.Connect()
-	if err != nil {
+	if err := bot.ConfigureBackand(); err != nil {
+		bot.Logger.Error(err)
+		os.Exit(1)
+	}
+	if err := bot.Connect(); err != nil {
 		bot.Logger.Error(err)
 		os.Exit(1)
 	}

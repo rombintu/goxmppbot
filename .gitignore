@@ -7,3 +7,6 @@ config.toml
 # Bin
 main
 *.exe
+
+# Databases
+*.db
