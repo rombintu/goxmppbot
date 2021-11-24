@@ -10,28 +10,29 @@ import (
 )
 
 type Default struct {
-	Host       string // `toml:HOST`
-	Login      string // `toml:LOGIN`
-	Password   string // `toml:PASSWORD`
-	DebugLevel string
-	DebugON    bool
+	Host          string `toml:"HOST"`
+	Login         string `toml:"LOGIN"`
+	Password      string `toml:"PASSWORD"`
+	DebugLevel    string `toml:"DEBUGLEVEL"`
+	DebugON       bool   `toml:"DEBUG"`
+	RefreshSecret string `toml:"REFRESH_SECRET"`
 }
 
 type Support struct {
-	Host         string
-	Port         string
-	Login        string
-	Password     string
-	SupportEmail string //`toml:SUPPORT_EMAIL`
+	Host         string `toml:"HOST"`
+	Port         string `toml:"PORT"`
+	Login        string `toml:"LOGIN"`
+	Password     string `toml:"PASSWORD"`
+	SupportEmail string `toml:"SUPPORTEMAIL"`
 }
 
 type Contacts struct {
-	Url string
+	Url string `toml:"URL"`
 }
 
 type BackendConf struct {
-	Connection string
-	DebugON    bool `toml:"DEBUG"`
+	Connection string `toml:"CONNECTION"`
+	Dev        bool   `toml:"DEV"`
 }
 
 type Config struct {

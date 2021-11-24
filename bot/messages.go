@@ -64,6 +64,7 @@ func (bot *Bot) HandleMessage() error {
 		"search":   "поиск",
 		"start":    "старт",
 		"services": "сервисы",
+		"refresh":  "/refresh",
 	}
 
 	for {
@@ -133,6 +134,33 @@ func (bot *Bot) HandleMessage() error {
 				mess.Text = resp
 				bot.SendMessage(mess)
 				continue
+			case reserv["refresh"]:
+				if userText == bot.Config.Default.RefreshSecret {
+					mess.Text = "Выполняется"
+					bot.SendMessage(mess)
+					urls, err := bot.Backend.GetPageUrls()
+					if err != nil {
+						bot.Logger.Error(err)
+						mess.Text = ToError(err)
+						continue
+					}
+					for _, u := range urls {
+						page, err := GetPage(u)
+						if err != nil {
+							bot.Logger.Error(err)
+							mess.Text = ToError(err)
+							continue
+						}
+						if err := bot.Backend.PutJson(page, u); err != nil {
+							bot.Logger.Error(err)
+							mess.Text = ToError(err)
+							continue
+						}
+					}
+					mess.Text = "Готово, база обновлена"
+					bot.SendMessage(mess)
+				}
+				continue
 			}
 
 			switch ToLower(userText) {
@@ -172,6 +200,13 @@ func (bot *Bot) HandleMessage() error {
 					mess.Text = ToError(err)
 					continue
 				}
+			case reserv["refresh"]:
+				if err := bot.Backend.PutCommand(GetHash(from), reserv["refresh"]); err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
+				}
+				mess.Text = "Enter password"
 			case "last":
 				c, err := bot.Backend.GetLastCommand(GetHash(from))
 				if err != nil {
