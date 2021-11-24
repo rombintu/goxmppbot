@@ -132,12 +132,33 @@ func (b *Backend) PutJson(data []byte, url string) error {
 	return nil
 }
 
-func (b *Backend) GetJson(url string) ([]byte, error) {
+func (b *Backend) GetJsonByUrl(url string) ([]byte, error) {
 	if err := b.Open(); err != nil {
 		return []byte{}, err
 	}
 	defer b.Close()
 	query, err := b.Driver.Query("SELECT data FROM questions WHERE url = $1", url)
+	if err != nil {
+		return []byte{}, err
+	}
+	var data []byte
+	for query.Next() {
+		if err := query.Scan(&data); err != nil {
+			return []byte{}, err
+		}
+	}
+	if err := query.Close(); err != nil {
+		return []byte{}, err
+	}
+	return data, err
+}
+
+func (b *Backend) GetJsonByName(name string) ([]byte, error) {
+	if err := b.Open(); err != nil {
+		return []byte{}, err
+	}
+	defer b.Close()
+	query, err := b.Driver.Query("SELECT data FROM questions WHERE name = $1", name)
 	if err != nil {
 		return []byte{}, err
 	}

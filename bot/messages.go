@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -134,6 +135,29 @@ func (bot *Bot) HandleMessage() error {
 				mess.Text = resp
 				bot.SendMessage(mess)
 				continue
+			case reserv["services"]:
+				data, err := bot.Backend.GetJsonByName(ToLower(userText))
+				if err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
+				}
+				if len(data) == 0 {
+					mess.Text = "Ничего не найдено, напишите 'поддержка'"
+					bot.SendMessage(mess)
+					continue
+				}
+				var page Page
+				if err := json.Unmarshal(data, &page); err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
+				}
+				buff := ""
+				for i, q := range page.Questions {
+					buff += fmt.Sprintf("Вопрос %d:\n%sОтвет:\n%s", i, q.Subquestion[i], q.Subanswer[i])
+				}
+				mess.Text = buff
 			case reserv["refresh"]:
 				if userText == bot.Config.Default.RefreshSecret {
 					mess.Text = "Выполняется"
@@ -168,16 +192,24 @@ func (bot *Bot) HandleMessage() error {
 				mess.Text = OnStart()
 			case "/помощь", "/help", reserv["help"]:
 				mess.Text = OnHelp()
-			case "list", "лист", reserv["services"]:
-				buff := ""
-				for key, value := range bot.Config.Links {
-					buff = buff + fmt.Sprintf("%s [%s]\n", value, key)
+			case reserv["services"]:
+				// buff := ""
+				// for key, value := range bot.Config.Links {
+				// 	buff = buff + fmt.Sprintf("%s [%s]\n", value, key)
+				// }
+				// mess.Text = buff
+				mess.Text = `
+Напишите НАЗВАНИЕ_СЕРВИСА по которому необходима консультация
+	Пример: *Судис*
+			`
+				if err := bot.Backend.PutCommand(GetHash(from), reserv["services"]); err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
 				}
-				mess.Text = buff
 			case reserv["support"]:
 				mess.Text = `
-Напишите свое обращение такого вида:
-Поддержка:НАЗВАНИЕ_СЕРВИСА письмо
+Напишите НАЗВАНИЕ_СЕРВИСА письмо
 	Пример: *СУДИС Все сломалось, помогите*
 			`
 				if err := bot.Backend.PutCommand(GetHash(from), reserv["support"]); err != nil {
@@ -187,8 +219,7 @@ func (bot *Bot) HandleMessage() error {
 				}
 			case reserv["search"]:
 				mess.Text = `
-Напишите свое обращение такого вида:
-Поиск: ФИО_ПОЧТА_ДОЛЖНОСТЬ_КОМПАНИЯ
+Напишите ФИО_ПОЧТА_ДОЛЖНОСТЬ_КОМПАНИЯ:
 Примечание: Можно использовать регулярные выражения
 Примечание: Добавьте в конце *: N*, чтобы регулировать выборку
 	1. Пример: *Иванов*
