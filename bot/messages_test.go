@@ -38,3 +38,8 @@ func TestValidateSupport(t *testing.T) {
 		})
 	}
 }
+
+func TestGetHash(t *testing.T) {
+	h := xmppbot.GetHash("login2")
+	fmt.Println(h)
+}

@@ -10,37 +10,45 @@ import (
 )
 
 type Default struct {
-	Host       string // `toml:HOST`
-	Login      string // `toml:LOGIN`
-	Password   string // `toml:PASSWORD`
-	DebugLevel string
-	DebugON    bool
+	Host          string `toml:"HOST"`
+	Login         string `toml:"LOGIN"`
+	Password      string `toml:"PASSWORD"`
+	DebugLevel    string `toml:"DEBUGLEVEL"`
+	DebugON       bool   `toml:"DEBUG"`
+	RefreshSecret string `toml:"REFRESH_SECRET"`
 }
 
 type Support struct {
-	Host         string
-	Port         string
-	Login        string
-	Password     string
-	SupportEmail string //`toml:SUPPORT_EMAIL`
+	Host         string `toml:"HOST"`
+	Port         string `toml:"PORT"`
+	Login        string `toml:"LOGIN"`
+	Password     string `toml:"PASSWORD"`
+	SupportEmail string `toml:"SUPPORTEMAIL"`
 }
 
 type Contacts struct {
-	Url string
+	Url string `toml:"URL"`
+}
+
+type BackendConf struct {
+	Connection string `toml:"CONNECTION"`
+	Dev        bool   `toml:"DEV"`
 }
 
 type Config struct {
-	Default  Default
-	Support  Support
-	Contacts Contacts
-	Links    map[string]string
+	Default     Default           `toml:"DEFAULT"`
+	Support     Support           `toml:"SUPPORT"`
+	Contacts    Contacts          `toml:"CONTACTS"`
+	BackendConf BackendConf       `toml:"BACKENDCONF"`
+	Links       map[string]string `toml:"LINKS"`
 }
 
 // Struct BOT
 type Bot struct {
-	Client *xmpp.Client
-	Config *Config
-	Logger *logrus.Logger
+	Client  *xmpp.Client
+	Config  *Config
+	Logger  *logrus.Logger
+	Backend *Backend
 }
 
 // Return configuration
@@ -75,6 +83,14 @@ func (bot *Bot) configureLogger() error {
 
 	bot.Logger.SetLevel(level)
 
+	return nil
+}
+
+func (bot *Bot) ConfigureBackand() error {
+	bot.Backend = NewBackend(bot.Config.BackendConf)
+	if err := bot.Backend.Init(); err != nil {
+		return err
+	}
 	return nil
 }
 

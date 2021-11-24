@@ -1,9 +1,10 @@
 [DEFAULT]
-HOST = "xmpp.leaguemail.ru"
-LOGIN = "user2@xmpp.leaguemail.ru"
+HOST = ""
+LOGIN = ""
 PASSWORD = ""
 DEBUGLEVEL = "debug" # [debug, info]
 DEBUG = true
+REFRESH_SECRET = ""
 
 [SUPPORT]
 HOST = ""
@@ -13,12 +14,10 @@ PASSWORD = ""
 SUPPORTEMAIL = ""
 
 [CONTACTS]
-URL = "https://mail.leaguemail.ru/contacts"
+URL = ""
+
+[BACKENDCONF]
+CONNECTION="sqlite.db" # Path to sqlite3.db
+DEV=true
 
 [LINKS]
-sep = "CЭП - http://it.mvd.ru/sections/4#questions"
-sed = "СЭД - http://it.mvd.ru/2#questions"
-svks-m = "СВКС-м - http://it.mvd.ru/sections/41#questions"
-sudis = "СУДИС - http://it.mvd.ru/%D0%BF%D0%BE%D0%B8%D0%B1#questions"
-visp = "ВСИП - http://it.mvd.ru/sections/29#questions"
-site = "Сайт - http://it.mvd.ru/sections/61"
