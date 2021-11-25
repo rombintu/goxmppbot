@@ -195,15 +195,18 @@ func (bot *Bot) HandleMessage() error {
 			case "/помощь", "/help", reserv["help"]:
 				mess.Text = OnHelp()
 			case reserv["services"]:
-				// buff := ""
-				// for key, value := range bot.Config.Links {
-				// 	buff = buff + fmt.Sprintf("%s [%s]\n", value, key)
-				// }
-				// mess.Text = buff
-				mess.Text = `
-Напишите НАЗВАНИЕ_СЕРВИСА по которому необходима консультация
-	Пример: *Судис*
-			`
+				buff := "Напишите НАЗВАНИЕ_СЕРВИСА по которому необходима консультация\n"
+				buff += "Примечание: Можно использовать нижний регистр\n"
+				names, err := bot.Backend.GetAllServiceName()
+				if err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
+				}
+				for i, n := range names {
+					buff += fmt.Sprintf("\t%d. %s\n", i+1, strings.ToTitle(n))
+				}
+				mess.Text = buff
 				if err := bot.Backend.PutCommand(GetHash(from), reserv["services"]); err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)

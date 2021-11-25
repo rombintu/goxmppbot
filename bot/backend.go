@@ -174,6 +174,29 @@ func (b *Backend) GetJsonByName(name string) ([]byte, error) {
 	return data, err
 }
 
+func (b *Backend) GetAllServiceName() ([]string, error) {
+	if err := b.Open(); err != nil {
+		return []string{}, err
+	}
+	defer b.Close()
+	query, err := b.Driver.Query("SELECT name FROM questions")
+	if err != nil {
+		return []string{}, err
+	}
+	var data []string
+	for query.Next() {
+		var name string
+		if err := query.Scan(&name); err != nil {
+			return []string{}, err
+		}
+		data = append(data, name)
+	}
+	if err := query.Close(); err != nil {
+		return []string{}, err
+	}
+	return data, err
+}
+
 func (b *Backend) GetPageUrls() ([]string, error) {
 	if err := b.Open(); err != nil {
 		return []string{}, err
