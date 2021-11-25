@@ -155,9 +155,11 @@ func (bot *Bot) HandleMessage() error {
 				}
 				buff := ""
 				for i, q := range page.Questions {
-					buff += fmt.Sprintf("Вопрос %d:\n%sОтвет:\n%s", i, q.Subquestion[i], q.Subanswer[i])
+					buff += fmt.Sprintf("Вопрос %d:\n%s\n\tОтвет: %s\n ---\n", i+1, q.Subquestion[i], q.Subanswer[i])
 				}
 				mess.Text = buff
+				bot.SendMessage(mess)
+				continue
 			case reserv["refresh"]:
 				if userText == bot.Config.Default.RefreshSecret {
 					mess.Text = "Выполняется"
