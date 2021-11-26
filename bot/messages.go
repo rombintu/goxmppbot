@@ -2,6 +2,7 @@ package bot
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -60,12 +61,13 @@ func (bot *Bot) OnSupport(user, subject, body string) (string, error) {
 // Loop func, listening command from users
 func (bot *Bot) HandleMessage() error {
 	reserv := map[string]string{
-		"help":     "помощь",
-		"support":  "поддержка",
-		"search":   "поиск",
-		"start":    "старт",
-		"services": "сервисы",
-		"refresh":  "/refresh",
+		"help":       "помощь",
+		"support":    "поддержка",
+		"search":     "поиск",
+		"start":      "старт",
+		"services":   "сервисы",
+		"refresh":    "/refresh",
+		"addservice": "/addservice",
 	}
 
 	for {
@@ -93,6 +95,7 @@ func (bot *Bot) HandleMessage() error {
 			if err != nil {
 				bot.Logger.Error(err)
 				mess.Text = ToError(err)
+				bot.SendMessage(mess)
 				continue
 			}
 
@@ -109,6 +112,7 @@ func (bot *Bot) HandleMessage() error {
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
 				if len(resp) == 0 {
@@ -130,6 +134,7 @@ func (bot *Bot) HandleMessage() error {
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
 				mess.Text = resp
@@ -140,6 +145,7 @@ func (bot *Bot) HandleMessage() error {
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
 				if len(data) == 0 {
@@ -151,6 +157,7 @@ func (bot *Bot) HandleMessage() error {
 				if err := json.Unmarshal(data, &page); err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
 				buff := ""
@@ -161,31 +168,53 @@ func (bot *Bot) HandleMessage() error {
 				bot.SendMessage(mess)
 				continue
 			case reserv["refresh"]:
-				if userText == bot.Config.Default.RefreshSecret {
-					mess.Text = "Выполняется"
-					bot.SendMessage(mess)
-					urls, err := bot.Backend.GetPageUrls()
+				if userText != bot.Config.Default.RefreshSecret {
+					continue
+				}
+				mess.Text = "Выполняется"
+				bot.SendMessage(mess)
+				urls, err := bot.Backend.GetPageUrls()
+				if err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
+				}
+				for _, u := range urls {
+					page, err := GetPage(u)
 					if err != nil {
 						bot.Logger.Error(err)
 						mess.Text = ToError(err)
+						bot.SendMessage(mess)
 						continue
 					}
-					for _, u := range urls {
-						page, err := GetPage(u)
-						if err != nil {
-							bot.Logger.Error(err)
-							mess.Text = ToError(err)
-							continue
-						}
-						if err := bot.Backend.PutJson(page, u); err != nil {
-							bot.Logger.Error(err)
-							mess.Text = ToError(err)
-							continue
-						}
+					if err := bot.Backend.PutPage(page, u); err != nil {
+						bot.Logger.Error(err)
+						mess.Text = ToError(err)
+						bot.SendMessage(mess)
+						continue
 					}
-					mess.Text = "Готово, база обновлена"
-					bot.SendMessage(mess)
 				}
+				mess.Text = "Готово, база обновлена"
+				bot.SendMessage(mess)
+				continue
+			case reserv["addservice"]:
+				text := strings.Split(userText, "|")
+				if text[0] != bot.Config.Default.RefreshSecret {
+					continue
+				}
+				mess.Text = "Выполняется"
+				bot.SendMessage(mess)
+				if len(text) != 3 {
+					mess.Text = ToError(errors.New("мало аргументов"))
+					continue
+				}
+				if err := bot.Backend.PutNewPage(text[1], text[2]); err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
+				}
+				mess.Text = "Готово, база обновлена"
+				bot.SendMessage(mess)
 				continue
 			}
 
@@ -243,15 +272,18 @@ func (bot *Bot) HandleMessage() error {
 					continue
 				}
 				mess.Text = "Enter password"
-			case "last":
-				c, err := bot.Backend.GetLastCommand(GetHash(from))
-				if err != nil {
-					return err
+			case reserv["addservice"]:
+				if err := bot.Backend.PutCommand(GetHash(from), reserv["addservice"]); err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
 				}
-				if c == "" {
+				mess.Text = "password|name|url"
+			case "last":
+				if lastCommand == "" {
 					mess.Text = "Null"
 				} else {
-					mess.Text = c
+					mess.Text = lastCommand
 				}
 			case "":
 				continue

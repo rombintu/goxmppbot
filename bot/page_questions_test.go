@@ -11,7 +11,7 @@ import (
 )
 
 func TestGetPage(t *testing.T) {
-	data, err := bot.GetPage("http://it.mvd.ru/faq/37")
+	data, err := bot.GetPage("http://it.mvd.ru/faq/39")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,20 +1,25 @@
 package bot
 
 import (
-	"database/sql"
-	"errors"
+	"context"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Backend struct {
-	Driver *sql.DB
+	Driver *mongo.Client
 	Config *BackendConf
 }
 
 type UserBack struct {
-	hlogin  string
-	command string
+	ID      primitive.ObjectID
+	HLogin  string
+	Command string
 }
 
 func NewBackend(back BackendConf) *Backend {
@@ -24,197 +29,233 @@ func NewBackend(back BackendConf) *Backend {
 }
 
 func (b *Backend) Init() error {
-	if err := b.Open(); err != nil {
+	ctx, err := b.Open()
+	if err != nil {
 		return err
 	}
-	defer b.Close()
-	if _, err := b.Driver.Exec(`
-	CREATE TABLE IF NOT EXISTS backend (
-		id INTEGER PRIMARY KEY AUTOINCREMENT, 
-		hlogin VARCHAR(50), 
-		command VARCHAR(50));`); err != nil {
-		return err
-	}
-	if _, err := b.Driver.Exec(`
-	CREATE TABLE IF NOT EXISTS questions (
-		id INTEGER PRIMARY KEY AUTOINCREMENT, 
-		name VARCHAR(50),
-		url VARCHAR(50), 
-		data BLOB);`); err != nil {
-		return err
-	}
+	defer b.Close(ctx)
+	// db := b.Driver.Database(b.Config.DatabaseName)
+	// db.Collection("tmp")
+	// db.Collection("questions")
 	return nil
 }
 
-func (b *Backend) Open() error {
-	if b.Config.Dev {
-		db, err := sql.Open("sqlite3", b.Config.Connection)
-		if err != nil {
-			return err
-		}
-		b.Driver = db
-		return nil
+func (b *Backend) Open() (context.Context, error) {
+	clientOptions := options.Client().ApplyURI(b.Config.Connection)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		return nil, err
 	}
-	return errors.New("database error")
+	b.Driver = client
+	return ctx, nil
 }
 
-func (b *Backend) Close() error {
-	return b.Driver.Close()
+func (b *Backend) Close(ctx context.Context) error {
+	return b.Driver.Disconnect(ctx)
 }
 
 func (b *Backend) GetLastCommand(hlogin string) (string, error) {
-	if err := b.Open(); err != nil {
-		return "", err
-	}
-	defer b.Close()
-	query, err := b.Driver.Query("SELECT command FROM backend WHERE hlogin = $1 LIMIT 1", hlogin)
+	ctx, err := b.Open()
 	if err != nil {
 		return "", err
 	}
-	var command string
-	for query.Next() {
-		if err := query.Scan(&command); err != nil {
+	defer b.Close(ctx)
+	db := b.Driver.Database(b.Config.DatabaseName)
+	backend := db.Collection("tmp")
+
+	filter := bson.D{
+		{Key: "HLogin", Value: hlogin},
+	}
+	var user UserBack
+	if err := backend.FindOne(ctx, filter).Decode(&user); err != nil {
+		if err.Error() != "mongo: no documents in result" {
 			return "", err
 		}
 	}
-	if err := query.Close(); err != nil {
+
+	if _, err := backend.DeleteMany(ctx, filter); err != nil {
 		return "", err
 	}
 
-	if _, err := b.Driver.Exec("DELETE FROM backend WHERE hlogin = $1", hlogin); err != nil {
-		return "", err
-	}
-	return command, nil
+	return user.Command, nil
 }
 
-func (b *Backend) DelLastCommands(hlogin string) error {
-	if err := b.Open(); err != nil {
-		return err
-	}
-	defer b.Close()
-	_, err := b.Driver.Exec("DELETE FROM backend WHERE hlogin = $1", hlogin)
-	if err != nil {
-		return err
-	}
+// func (b *Backend) FlashCommands(hlogin string) error {
+// 	ctx, err := b.Open()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer b.Close(ctx)
+// 	db := b.Driver.Database(b.Config.DatabaseName)
+// 	backend := db.Collection("tmp")
 
-	return nil
-}
+// 	filter := bson.D{
+// 		{Key: "HLogin", Value: hlogin},
+// 	}
+
+// 	if _, err := backend.DeleteMany(ctx, filter); err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func (b *Backend) PutCommand(hlogin, command string) error {
-	if err := b.Open(); err != nil {
+	ctx, err := b.Open()
+	if err != nil {
 		return err
 	}
-	defer b.Close()
-	_, err := b.Driver.Exec(
-		"INSERT INTO backend (hlogin, command) VALUES ($1, $2)",
-		hlogin,
-		command,
-	)
-	if err != nil {
+	defer b.Close(ctx)
+	db := b.Driver.Database(b.Config.DatabaseName)
+	backend := db.Collection("tmp")
+
+	user := UserBack{
+		ID:      primitive.NewObjectID(),
+		HLogin:  hlogin,
+		Command: command,
+	}
+	if _, err := backend.InsertOne(ctx, bson.D{
+		{Key: "ID", Value: user.ID},
+		{Key: "HLogin", Value: user.HLogin},
+		{Key: "Command", Value: user.Command},
+	}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (b *Backend) PutJson(data []byte, url string) error {
-	if err := b.Open(); err != nil {
+func (b *Backend) PutPage(data []byte, url string) error {
+	ctx, err := b.Open()
+	if err != nil {
 		return err
 	}
-	defer b.Close()
-	_, err := b.Driver.Exec(
-		"UPDATE questions SET data = $1 WHERE url = $2",
-		data,
-		url,
-	)
+	defer b.Close(ctx)
+	db := b.Driver.Database(b.Config.DatabaseName)
+	backend := db.Collection("qestions")
+	filter := bson.D{
+		{Key: "url", Value: url},
+	}
+	if _, err := backend.UpdateOne(ctx, filter, bson.D{
+		{Key: "data", Value: data},
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Backend) PutNewPage(name, url string) error {
+	ctx, err := b.Open()
 	if err != nil {
+		return err
+	}
+	defer b.Close(ctx)
+	db := b.Driver.Database(b.Config.DatabaseName)
+	backend := db.Collection("qestions")
+	page := bson.D{
+		{Key: "ID", Value: primitive.NewObjectID()},
+		{Key: "name", Value: name},
+		{Key: "url", Value: url},
+		{Key: "data", Value: []byte{}},
+	}
+	if _, err := backend.InsertOne(ctx, page); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (b *Backend) GetJsonByUrl(url string) ([]byte, error) {
-	if err := b.Open(); err != nil {
-		return []byte{}, err
-	}
-	defer b.Close()
-	query, err := b.Driver.Query("SELECT data FROM questions WHERE url = $1", url)
+	ctx, err := b.Open()
 	if err != nil {
 		return []byte{}, err
 	}
+	defer b.Close(ctx)
+	db := b.Driver.Database(b.Config.DatabaseName)
+	backend := db.Collection("qestions")
+	filter := bson.D{
+		{Key: "url", Value: url},
+	}
 	var data []byte
-	for query.Next() {
-		if err := query.Scan(&data); err != nil {
+	if err := backend.FindOne(ctx, filter).Decode(&data); err != nil {
+		if err.Error() != "mongo: no documents in result" {
 			return []byte{}, err
 		}
-	}
-	if err := query.Close(); err != nil {
-		return []byte{}, err
 	}
 	return data, err
 }
 
 func (b *Backend) GetJsonByName(name string) ([]byte, error) {
-	if err := b.Open(); err != nil {
-		return []byte{}, err
-	}
-	defer b.Close()
-	query, err := b.Driver.Query("SELECT data FROM questions WHERE name = $1", name)
+	ctx, err := b.Open()
 	if err != nil {
 		return []byte{}, err
 	}
+	defer b.Close(ctx)
+	db := b.Driver.Database(b.Config.DatabaseName)
+	backend := db.Collection("qestions")
+	filter := bson.D{
+		{Key: "name", Value: name},
+	}
 	var data []byte
-	for query.Next() {
-		if err := query.Scan(&data); err != nil {
+	if err := backend.FindOne(ctx, filter).Decode(&data); err != nil {
+		if err.Error() != "mongo: no documents in result" {
 			return []byte{}, err
 		}
-	}
-	if err := query.Close(); err != nil {
-		return []byte{}, err
 	}
 	return data, err
 }
 
 func (b *Backend) GetAllServiceName() ([]string, error) {
-	if err := b.Open(); err != nil {
-		return []string{}, err
-	}
-	defer b.Close()
-	query, err := b.Driver.Query("SELECT name FROM questions")
+	ctx, err := b.Open()
 	if err != nil {
 		return []string{}, err
 	}
+	defer b.Close(ctx)
+	db := b.Driver.Database(b.Config.DatabaseName)
+	backend := db.Collection("qestions")
+
+	cur, err := backend.Find(ctx, bson.D{})
 	var data []string
-	for query.Next() {
-		var name string
-		if err := query.Scan(&name); err != nil {
+	for cur.Next(ctx) {
+		page := struct {
+			ID   primitive.ObjectID
+			Name string
+			Url  string
+			Data []byte
+		}{}
+		if err := cur.Decode(&page); err != nil {
 			return []string{}, err
 		}
-		data = append(data, name)
+		data = append(data, page.Name)
 	}
-	if err := query.Close(); err != nil {
+	if err := cur.Err(); err != nil {
 		return []string{}, err
 	}
 	return data, err
 }
 
 func (b *Backend) GetPageUrls() ([]string, error) {
-	if err := b.Open(); err != nil {
-		return []string{}, err
-	}
-	defer b.Close()
-	query, err := b.Driver.Query("SELECT url FROM questions")
+	ctx, err := b.Open()
 	if err != nil {
 		return []string{}, err
 	}
+	defer b.Close(ctx)
+	db := b.Driver.Database(b.Config.DatabaseName)
+	backend := db.Collection("qestions")
+
+	cur, err := backend.Find(ctx, bson.D{})
 	var data []string
-	for query.Next() {
-		var url string
-		if err := query.Scan(&url); err != nil {
+	for cur.Next(ctx) {
+		page := struct {
+			ID   primitive.ObjectID
+			Name string
+			Url  string
+			Data []byte
+		}{}
+		if err := cur.Decode(&page); err != nil {
 			return []string{}, err
 		}
-		data = append(data, url)
+		data = append(data, page.Url)
 	}
-	if err := query.Close(); err != nil {
+	if err := cur.Err(); err != nil {
 		return []string{}, err
 	}
 	return data, err

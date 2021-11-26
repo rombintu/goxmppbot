@@ -31,8 +31,8 @@ type Contacts struct {
 }
 
 type BackendConf struct {
-	Connection string `toml:"CONNECTION"`
-	Dev        bool   `toml:"DEV"`
+	Connection   string `toml:"CONNECTION"`
+	DatabaseName string `toml:"DBNAME"`
 }
 
 type Config struct {

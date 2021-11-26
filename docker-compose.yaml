@@ -2,3 +2,18 @@ version: "3.9"
 services:
   bot:
     build: .
+    restart: always
+    depends_on:
+      - mongo
+    environment:
+      - MONGODB=mongodb://root:root@mongo:27017/
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: backend
+    volumes:
+      - ./mongodb/data:/data/db
+  
