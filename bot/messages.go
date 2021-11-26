@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -148,20 +147,20 @@ func (bot *Bot) HandleMessage() error {
 					bot.SendMessage(mess)
 					continue
 				}
-				if len(data) == 0 {
+				if len(data.Questions) == 0 {
 					mess.Text = "Ничего не найдено, напишите 'поддержка'"
 					bot.SendMessage(mess)
 					continue
 				}
-				var page Page
-				if err := json.Unmarshal(data, &page); err != nil {
-					bot.Logger.Error(err)
-					mess.Text = ToError(err)
-					bot.SendMessage(mess)
-					continue
-				}
+				// var page Page
+				// if err := json.Unmarshal(data, &page); err != nil {
+				// 	bot.Logger.Error(err)
+				// 	mess.Text = ToError(err)
+				// 	bot.SendMessage(mess)
+				// 	continue
+				// }
 				buff := ""
-				for i, q := range page.Questions {
+				for i, q := range data.Questions {
 					buff += fmt.Sprintf("Вопрос %d:\n%s\n\tОтвет: %s\n ---\n", i+1, q.Subquestion[i], q.Subanswer[i])
 				}
 				mess.Text = buff

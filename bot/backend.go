@@ -6,7 +6,6 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -17,7 +16,6 @@ type Backend struct {
 }
 
 type UserBack struct {
-	ID      primitive.ObjectID
 	HLogin  string
 	Command string
 }
@@ -110,12 +108,10 @@ func (b *Backend) PutCommand(hlogin, command string) error {
 	backend := db.Collection("tmp")
 
 	user := UserBack{
-		ID:      primitive.NewObjectID(),
 		HLogin:  hlogin,
 		Command: command,
 	}
 	if _, err := backend.InsertOne(ctx, bson.D{
-		{Key: "ID", Value: user.ID},
 		{Key: "HLogin", Value: user.HLogin},
 		{Key: "Command", Value: user.Command},
 	}); err != nil {
@@ -124,19 +120,21 @@ func (b *Backend) PutCommand(hlogin, command string) error {
 	return nil
 }
 
-func (b *Backend) PutPage(data []byte, url string) error {
+func (b *Backend) PutPage(data Page, url string) error {
 	ctx, err := b.Open()
 	if err != nil {
 		return err
 	}
 	defer b.Close(ctx)
 	db := b.Driver.Database(b.Config.DatabaseName)
-	backend := db.Collection("qestions")
+	backend := db.Collection("questions")
 	filter := bson.D{
 		{Key: "url", Value: url},
 	}
-	if _, err := backend.UpdateOne(ctx, filter, bson.D{
-		{Key: "data", Value: data},
+	if _, err := backend.UpdateOne(ctx, filter, bson.M{
+		"$set": bson.M{
+			"data": data,
+		},
 	}); err != nil {
 		return err
 	}
@@ -150,12 +148,11 @@ func (b *Backend) PutNewPage(name, url string) error {
 	}
 	defer b.Close(ctx)
 	db := b.Driver.Database(b.Config.DatabaseName)
-	backend := db.Collection("qestions")
+	backend := db.Collection("questions")
 	page := bson.D{
-		{Key: "ID", Value: primitive.NewObjectID()},
 		{Key: "name", Value: name},
 		{Key: "url", Value: url},
-		{Key: "data", Value: []byte{}},
+		{Key: "data", Value: Page{}},
 	}
 	if _, err := backend.InsertOne(ctx, page); err != nil {
 		return err
@@ -163,41 +160,41 @@ func (b *Backend) PutNewPage(name, url string) error {
 	return nil
 }
 
-func (b *Backend) GetJsonByUrl(url string) ([]byte, error) {
+func (b *Backend) GetJsonByUrl(url string) (Page, error) {
 	ctx, err := b.Open()
 	if err != nil {
-		return []byte{}, err
+		return Page{}, err
 	}
 	defer b.Close(ctx)
 	db := b.Driver.Database(b.Config.DatabaseName)
-	backend := db.Collection("qestions")
+	backend := db.Collection("questions")
 	filter := bson.D{
 		{Key: "url", Value: url},
 	}
-	var data []byte
+	var data Page
 	if err := backend.FindOne(ctx, filter).Decode(&data); err != nil {
 		if err.Error() != "mongo: no documents in result" {
-			return []byte{}, err
+			return Page{}, err
 		}
 	}
 	return data, err
 }
 
-func (b *Backend) GetJsonByName(name string) ([]byte, error) {
+func (b *Backend) GetJsonByName(name string) (Page, error) {
 	ctx, err := b.Open()
 	if err != nil {
-		return []byte{}, err
+		return Page{}, err
 	}
 	defer b.Close(ctx)
 	db := b.Driver.Database(b.Config.DatabaseName)
-	backend := db.Collection("qestions")
+	backend := db.Collection("questions")
 	filter := bson.D{
 		{Key: "name", Value: name},
 	}
-	var data []byte
+	var data Page
 	if err := backend.FindOne(ctx, filter).Decode(&data); err != nil {
 		if err.Error() != "mongo: no documents in result" {
-			return []byte{}, err
+			return Page{}, err
 		}
 	}
 	return data, err
@@ -210,26 +207,25 @@ func (b *Backend) GetAllServiceName() ([]string, error) {
 	}
 	defer b.Close(ctx)
 	db := b.Driver.Database(b.Config.DatabaseName)
-	backend := db.Collection("qestions")
+	backend := db.Collection("questions")
 
 	cur, err := backend.Find(ctx, bson.D{})
-	var data []string
+	var names []string
 	for cur.Next(ctx) {
-		page := struct {
-			ID   primitive.ObjectID
-			Name string
-			Url  string
-			Data []byte
+		data := struct {
+			name string
+			url  string
+			page Page
 		}{}
-		if err := cur.Decode(&page); err != nil {
+		if err := cur.Decode(&data); err != nil {
 			return []string{}, err
 		}
-		data = append(data, page.Name)
+		names = append(names, data.name)
 	}
 	if err := cur.Err(); err != nil {
 		return []string{}, err
 	}
-	return data, err
+	return names, err
 }
 
 func (b *Backend) GetPageUrls() ([]string, error) {
@@ -239,24 +235,23 @@ func (b *Backend) GetPageUrls() ([]string, error) {
 	}
 	defer b.Close(ctx)
 	db := b.Driver.Database(b.Config.DatabaseName)
-	backend := db.Collection("qestions")
+	backend := db.Collection("questions")
 
 	cur, err := backend.Find(ctx, bson.D{})
-	var data []string
+	var urls []string
 	for cur.Next(ctx) {
-		page := struct {
-			ID   primitive.ObjectID
-			Name string
-			Url  string
-			Data []byte
+		data := struct {
+			name string
+			url  string
+			page Page
 		}{}
-		if err := cur.Decode(&page); err != nil {
+		if err := cur.Decode(&data); err != nil {
 			return []string{}, err
 		}
-		data = append(data, page.Url)
+		urls = append(urls, data.url)
 	}
 	if err := cur.Err(); err != nil {
 		return []string{}, err
 	}
-	return data, err
+	return urls, err
 }

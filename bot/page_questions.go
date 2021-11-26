@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -17,19 +16,19 @@ type Page struct {
 	Questions []Question
 }
 
-func GetPage(url string) ([]byte, error) {
+func GetPage(url string) (Page, error) {
 	// Perform request
 	resp, err := http.Get(url)
 	if err != nil {
 		print(err)
-		return []byte{}, err
+		return Page{}, err
 	}
 	// Cleanup when this function ends
 	defer resp.Body.Close()
 	// Read & parse response data
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return []byte{}, err
+		return Page{}, err
 	}
 	var quests string
 	// var quests []string
@@ -53,9 +52,9 @@ func GetPage(url string) ([]byte, error) {
 	page := Page{
 		Questions: questions,
 	}
-	data, err := json.Marshal(page)
-	if err != nil {
-		return []byte{}, err
-	}
-	return data, nil
+	// data, err := json.Marshal(page)
+	// if err != nil {
+	// 	return Page{}, err
+	// }
+	return page, nil
 }
