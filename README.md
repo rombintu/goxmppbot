@@ -51,7 +51,13 @@ SUPPORTEMAIL = "Полный логин поддержки, куда идут п
 [CONTACTS]
 URL = "Адрес до контактов" # Example: "https://mail.ru/contacts"
 
+# Значение из ENV в приоритете
 [BACKENDCONF]
-CONNECTION="mongodb://root:root@192.168.0.2:27017" # Значение из ENV в приоритете
-DBNAME="backend"
+HOST="localhost"
+PORT="5432"
+USER="user"
+PASSWORD="password"
+SSLMODE="disable"
+DATABASE="backend"
+DEV=true
 ```

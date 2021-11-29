@@ -17,5 +17,10 @@ SUPPORTEMAIL = ""
 URL = ""
 
 [BACKENDCONF]
-CONNECTION="mongodb://<username>:<password>@<host>:<port>" # Значение из ENV в приоритете
-DBNAME="backend"
+HOST="localhost"
+PORT="5432"
+USER="user"
+PASSWORD="password"
+SSLMODE="disable"
+DATABASE="backend"
+DEV=true
