@@ -9,6 +9,37 @@ import (
 	"time"
 )
 
+const (
+	notFound           string = "Ничего не найдено"
+	notFoundCommand    string = "Команда не найдена, попробуйте написать /help"
+	loading            string = "Выполняется"
+	dbUpdated          string = "Готово, база обновлена"
+	fewArguments       string = "Мало аргументов"
+	errorSend          string = "Error send message: "
+	internalError      string = "Произошла внутренняя ошибка: "
+	supportHelpMessage string = `
+Напишите НАЗВАНИЕ_СЕРВИСА письмо
+Пример: *СУДИС Все сломалось, помогите*
+`
+	searchHelpMessage string = `
+Напишите ФИО_ПОЧТА_ДОЛЖНОСТЬ_КОМПАНИЯ:
+Примечание: Можно использовать регулярные выражения
+Примечание: Добавьте в конце *: N*, чтобы регулировать выборку
+	1. Пример: *Иванов*
+	2. Пример: *Иванов: 10*
+	3. Пример: *ivanov*
+`
+	serviceHelpMessage string = `
+Напишите НАЗВАНИЕ_СЕРВИСА по которому необходима консультация
+Примечание: Можно использовать нижний регистр
+`
+	onHelp string = `
+Сервисы - Вывести ссылки на ответы по сервисам
+Поддержка - Помогу написать письмо в поддержку
+Поиск - Помогу найти колег
+`
+)
+
 // Action on /start
 func OnStart() string {
 	var submess string
@@ -22,15 +53,6 @@ func OnStart() string {
 		submess = "Добрый вечер"
 	}
 	return submess + ", напишите /help или помощь. Я вам помогу разобраться"
-}
-
-// Action on /help
-func OnHelp() string {
-	return `
-Сервисы - Вывести ссылки на ответы по сервисам
-Поддержка - Помогу написать письмо в поддержку
-Поиск - Помогу найти колег
-	`
 }
 
 // Validate message for support mail

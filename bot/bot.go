@@ -31,8 +31,13 @@ type Contacts struct {
 }
 
 type BackendConf struct {
-	Connection   string `toml:"CONNECTION"`
-	DatabaseName string `toml:"DBNAME"`
+	Host         string `toml:"HOST"`
+	Port         string `toml:"PORT"`
+	User         string `toml:"USER"`
+	Password     string `toml:"PASSWORD"`
+	SSLMode      string `toml:"SSLMODE"`
+	DatabaseName string `toml:"DATABASE"`
+	Dev          bool   `toml:"DEV"`
 }
 
 type Config struct {

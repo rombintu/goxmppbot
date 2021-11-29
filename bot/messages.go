@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -18,7 +19,7 @@ func (bot *Bot) SendEmail(chat xmpp.Chat) {
 	chat.Type = "normal"
 	_, err := bot.Client.Send(chat)
 	if err != nil {
-		bot.Logger.Info("Error send message: ", err.Error())
+		bot.Logger.Info(errorSend, err.Error())
 	}
 
 }
@@ -28,7 +29,7 @@ func (bot *Bot) SendMessage(chat xmpp.Chat) {
 	chat.Type = "chat"
 	_, err := bot.Client.Send(chat)
 	if err != nil {
-		bot.Logger.Info("Error send message: ", err.Error())
+		bot.Logger.Info(errorSend, err.Error())
 	}
 }
 
@@ -36,7 +37,7 @@ func (bot *Bot) SendMessage(chat xmpp.Chat) {
 func (bot *Bot) SendOOB(chat xmpp.Chat) {
 	_, err := bot.Client.SendOOB(chat)
 	if err != nil {
-		bot.Logger.Info("Error send message: ", err.Error())
+		bot.Logger.Info(errorSend, err.Error())
 	}
 }
 
@@ -44,7 +45,7 @@ func (bot *Bot) SendOOB(chat xmpp.Chat) {
 func (bot *Bot) SendORG(chat xmpp.Chat) {
 	_, err := bot.Client.SendOrg("message")
 	if err != nil {
-		bot.Logger.Info("Error send message: ", err.Error())
+		bot.Logger.Info(errorSend, err.Error())
 	}
 }
 
@@ -100,7 +101,7 @@ func (bot *Bot) HandleMessage() error {
 
 			switch lastCommand {
 			case reserv["search"]:
-				mess.Text = "Выполняется..."
+				mess.Text = loading
 				bot.SendMessage(mess)
 				count := "5"
 				target := strings.Split(ToLower(userText), ":")
@@ -115,7 +116,7 @@ func (bot *Bot) HandleMessage() error {
 					continue
 				}
 				if len(resp) == 0 {
-					mess.Text = "Ничего не найдено"
+					mess.Text = notFound
 					bot.SendMessage(mess)
 					continue
 				}
@@ -125,6 +126,7 @@ func (bot *Bot) HandleMessage() error {
 			case reserv["support"]:
 				emailData, err := ParseSubjectAndBody(userText)
 				if err != nil {
+					bot.Logger.Error(err)
 					mess.Text = err.Error()
 					bot.SendMessage(mess)
 					continue
@@ -147,35 +149,36 @@ func (bot *Bot) HandleMessage() error {
 					bot.SendMessage(mess)
 					continue
 				}
-				if len(data.Questions) == 0 {
-					mess.Text = "Ничего не найдено, напишите 'поддержка'"
+				if len(data) == 0 {
+					mess.Text = notFound
 					bot.SendMessage(mess)
 					continue
 				}
-				// var page Page
-				// if err := json.Unmarshal(data, &page); err != nil {
-				// 	bot.Logger.Error(err)
-				// 	mess.Text = ToError(err)
-				// 	bot.SendMessage(mess)
-				// 	continue
-				// }
-				// buff := ""
-				for i, q := range data.Questions {
+				var page Page
+				if err := json.Unmarshal(data, &page); err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					bot.SendMessage(mess)
+					continue
+				}
+
+				for i, q := range page.Questions {
 					mess.Text = fmt.Sprintf("Вопрос: *%s*\n\tОтвет: %s\n ---\n", q.Subquestion[i], q.Subanswer[i])
 					bot.SendMessage(mess)
 				}
-				// bot.SendMessage(mess)
+
 				continue
 			case reserv["refresh"]:
 				if userText != bot.Config.Default.RefreshSecret {
 					continue
 				}
-				mess.Text = "Выполняется"
+				mess.Text = loading
 				bot.SendMessage(mess)
 				urls, _, err := bot.Backend.GetPageUrlsAndNames()
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
 				for _, u := range urls {
@@ -193,7 +196,7 @@ func (bot *Bot) HandleMessage() error {
 						continue
 					}
 				}
-				mess.Text = "Готово, база обновлена"
+				mess.Text = dbUpdated
 				bot.SendMessage(mess)
 				continue
 			case reserv["addservice"]:
@@ -201,18 +204,20 @@ func (bot *Bot) HandleMessage() error {
 				if text[0] != bot.Config.Default.RefreshSecret {
 					continue
 				}
-				mess.Text = "Выполняется"
+				mess.Text = loading
 				bot.SendMessage(mess)
 				if len(text) != 3 {
-					mess.Text = ToError(errors.New("мало аргументов"))
+					mess.Text = ToError(errors.New(fewArguments))
+					bot.SendMessage(mess)
 					continue
 				}
 				if err := bot.Backend.PutNewPage(text[1], text[2]); err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
-				mess.Text = "Готово, база обновлена"
+				mess.Text = dbUpdated
 				bot.SendMessage(mess)
 				continue
 			}
@@ -221,10 +226,9 @@ func (bot *Bot) HandleMessage() error {
 			case "/start", reserv["start"]:
 				mess.Text = OnStart()
 			case "/помощь", "/help", reserv["help"]:
-				mess.Text = OnHelp()
+				mess.Text = onHelp
 			case reserv["services"]:
-				buff := "Напишите НАЗВАНИЕ_СЕРВИСА по которому необходима консультация\n"
-				buff += "Примечание: Можно использовать нижний регистр\n"
+				buff := serviceHelpMessage
 				_, names, err := bot.Backend.GetPageUrlsAndNames()
 				if err != nil {
 					bot.Logger.Error(err)
@@ -242,24 +246,14 @@ func (bot *Bot) HandleMessage() error {
 					continue
 				}
 			case reserv["support"]:
-				mess.Text = `
-Напишите НАЗВАНИЕ_СЕРВИСА письмо
-	Пример: *СУДИС Все сломалось, помогите*
-			`
+				mess.Text = supportHelpMessage
 				if err := bot.Backend.PutCommand(GetHash(from), reserv["support"]); err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
 					continue
 				}
 			case reserv["search"]:
-				mess.Text = `
-Напишите ФИО_ПОЧТА_ДОЛЖНОСТЬ_КОМПАНИЯ:
-Примечание: Можно использовать регулярные выражения
-Примечание: Добавьте в конце *: N*, чтобы регулировать выборку
-	1. Пример: *Иванов*
-	2. Пример: *Иванов: 10*
-	3. Пример: *ivanov*
-			`
+				mess.Text = searchHelpMessage
 				if err := bot.Backend.PutCommand(GetHash(from), reserv["search"]); err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
@@ -288,7 +282,7 @@ func (bot *Bot) HandleMessage() error {
 			case "":
 				continue
 			default:
-				mess.Text = "Неверный ввод, попробуйте ввести команду [help] или [помощь]."
+				mess.Text = notFoundCommand
 			}
 			bot.SendMessage(mess)
 		}
