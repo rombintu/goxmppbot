@@ -25,7 +25,7 @@ docker run --name mongodb \
     -e MONGO_INITDB_ROOT_USERNAME=<username> \ 
     -e MONGO_INITDB_ROOT_PASSWORD=<passowrd> \ 
     -e MONGO_INITDB_DATABASE=backend \ 
-    -v <some_path>/mongo:/data/db \ 
+    -v <some_path>/mongodb:/data/db \ 
     -d -p 27017:27017 mongo
 ```
 
