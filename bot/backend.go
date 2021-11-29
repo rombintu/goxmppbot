@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -31,9 +32,14 @@ type UserBack struct {
 // }
 
 func NewBackend(back BackendConf) *Backend {
-	return &Backend{
+	backend := Backend{
 		Config: &back,
 	}
+	conn := os.Getenv("MONGODB")
+	if conn != "" {
+		backend.Config.Connection = conn
+	}
+	return &backend
 }
 
 func (b *Backend) Init() error {
@@ -42,9 +48,6 @@ func (b *Backend) Init() error {
 		return err
 	}
 	defer b.Close(ctx)
-	// db := b.Driver.Database(b.Config.DatabaseName)
-	// db.Collection("tmp")
-	// db.Collection("questions")
 	return nil
 }
 

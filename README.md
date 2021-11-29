@@ -50,6 +50,6 @@ SUPPORTEMAIL = "Полный логин поддержки, куда идут п
 URL = "Адрес до контактов" # Example: "https://mail.ru/contacts"
 
 [BACKENDCONF]
-CONNECTION= "Путь до локальной базы данных" # Example: "sqlite.db"
-DEV=true # Рабоать в режиме разработки
+CONNECTION="mongodb://root:root@192.168.0.2:27017" # Значение из ENV в приоритете
+DBNAME="backend"
 ```

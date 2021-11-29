@@ -6,7 +6,7 @@ services:
     depends_on:
       - mongo
     environment:
-      - MONGODB=mongodb://root:root@mongo:27017/
+      - MONGODB=mongodb://root:root@mongo/
   mongo:
     image: mongo
     restart: always

@@ -17,5 +17,5 @@ SUPPORTEMAIL = ""
 URL = ""
 
 [BACKENDCONF]
-CONNECTION="mongodb://<username>:<password>@<host>:<port>"
+CONNECTION="mongodb://<username>:<password>@<host>:<port>" # Значение из ENV в приоритете
 DBNAME="backend"
