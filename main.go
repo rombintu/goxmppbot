@@ -18,6 +18,6 @@ func main() {
 	}
 	if err := bot.HandleMessage(); err != nil {
 		bot.Logger.Error(err)
-		os.Exit(1)
+		// os.Exit(1)
 	}
 }

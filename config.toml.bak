@@ -17,7 +17,5 @@ SUPPORTEMAIL = ""
 URL = ""
 
 [BACKENDCONF]
-CONNECTION="sqlite.db" # Path to sqlite3.db
-DEV=true
-
-[LINKS]
+CONNECTION="mongodb://<username>:<password>@<host>:<port>"
+DBNAME="backend"

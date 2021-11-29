@@ -1,7 +1,7 @@
 package bot
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -60,12 +60,13 @@ func (bot *Bot) OnSupport(user, subject, body string) (string, error) {
 // Loop func, listening command from users
 func (bot *Bot) HandleMessage() error {
 	reserv := map[string]string{
-		"help":     "помощь",
-		"support":  "поддержка",
-		"search":   "поиск",
-		"start":    "старт",
-		"services": "сервисы",
-		"refresh":  "/refresh",
+		"help":       "помощь",
+		"support":    "поддержка",
+		"search":     "поиск",
+		"start":      "старт",
+		"services":   "сервисы",
+		"refresh":    "/refresh",
+		"addservice": "/addservice",
 	}
 
 	for {
@@ -93,6 +94,7 @@ func (bot *Bot) HandleMessage() error {
 			if err != nil {
 				bot.Logger.Error(err)
 				mess.Text = ToError(err)
+				bot.SendMessage(mess)
 				continue
 			}
 
@@ -109,6 +111,7 @@ func (bot *Bot) HandleMessage() error {
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
 				if len(resp) == 0 {
@@ -130,6 +133,7 @@ func (bot *Bot) HandleMessage() error {
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
 				mess.Text = resp
@@ -140,52 +144,76 @@ func (bot *Bot) HandleMessage() error {
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
-				if len(data) == 0 {
+				if len(data.Questions) == 0 {
 					mess.Text = "Ничего не найдено, напишите 'поддержка'"
 					bot.SendMessage(mess)
 					continue
 				}
-				var page Page
-				if err := json.Unmarshal(data, &page); err != nil {
+				// var page Page
+				// if err := json.Unmarshal(data, &page); err != nil {
+				// 	bot.Logger.Error(err)
+				// 	mess.Text = ToError(err)
+				// 	bot.SendMessage(mess)
+				// 	continue
+				// }
+				// buff := ""
+				for i, q := range data.Questions {
+					mess.Text = fmt.Sprintf("Вопрос: *%s*\n\tОтвет: %s\n ---\n", q.Subquestion[i], q.Subanswer[i])
+					bot.SendMessage(mess)
+				}
+				// bot.SendMessage(mess)
+				continue
+			case reserv["refresh"]:
+				if userText != bot.Config.Default.RefreshSecret {
+					continue
+				}
+				mess.Text = "Выполняется"
+				bot.SendMessage(mess)
+				urls, _, err := bot.Backend.GetPageUrlsAndNames()
+				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
 					continue
 				}
-				buff := ""
-				for i, q := range page.Questions {
-					buff += fmt.Sprintf("Вопрос %d:\n%s\n\tОтвет: %s\n ---\n", i+1, q.Subquestion[i], q.Subanswer[i])
-				}
-				mess.Text = buff
-				bot.SendMessage(mess)
-				continue
-			case reserv["refresh"]:
-				if userText == bot.Config.Default.RefreshSecret {
-					mess.Text = "Выполняется"
-					bot.SendMessage(mess)
-					urls, err := bot.Backend.GetPageUrls()
+				for _, u := range urls {
+					page, err := GetPage(u)
 					if err != nil {
 						bot.Logger.Error(err)
 						mess.Text = ToError(err)
+						bot.SendMessage(mess)
 						continue
 					}
-					for _, u := range urls {
-						page, err := GetPage(u)
-						if err != nil {
-							bot.Logger.Error(err)
-							mess.Text = ToError(err)
-							continue
-						}
-						if err := bot.Backend.PutJson(page, u); err != nil {
-							bot.Logger.Error(err)
-							mess.Text = ToError(err)
-							continue
-						}
+					if err := bot.Backend.UpdatePage(page, u); err != nil {
+						bot.Logger.Error(err)
+						mess.Text = ToError(err)
+						bot.SendMessage(mess)
+						continue
 					}
-					mess.Text = "Готово, база обновлена"
-					bot.SendMessage(mess)
 				}
+				mess.Text = "Готово, база обновлена"
+				bot.SendMessage(mess)
+				continue
+			case reserv["addservice"]:
+				text := strings.Split(userText, "|")
+				if text[0] != bot.Config.Default.RefreshSecret {
+					continue
+				}
+				mess.Text = "Выполняется"
+				bot.SendMessage(mess)
+				if len(text) != 3 {
+					mess.Text = ToError(errors.New("мало аргументов"))
+					continue
+				}
+				if err := bot.Backend.PutNewPage(text[1], text[2]); err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
+				}
+				mess.Text = "Готово, база обновлена"
+				bot.SendMessage(mess)
 				continue
 			}
 
@@ -197,12 +225,13 @@ func (bot *Bot) HandleMessage() error {
 			case reserv["services"]:
 				buff := "Напишите НАЗВАНИЕ_СЕРВИСА по которому необходима консультация\n"
 				buff += "Примечание: Можно использовать нижний регистр\n"
-				names, err := bot.Backend.GetAllServiceName()
+				_, names, err := bot.Backend.GetPageUrlsAndNames()
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
 					continue
 				}
+
 				for i, n := range names {
 					buff += fmt.Sprintf("\t%d. %s\n", i+1, strings.ToTitle(n))
 				}
@@ -243,15 +272,18 @@ func (bot *Bot) HandleMessage() error {
 					continue
 				}
 				mess.Text = "Enter password"
-			case "last":
-				c, err := bot.Backend.GetLastCommand(GetHash(from))
-				if err != nil {
-					return err
+			case reserv["addservice"]:
+				if err := bot.Backend.PutCommand(GetHash(from), reserv["addservice"]); err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					continue
 				}
-				if c == "" {
+				mess.Text = "password|name|url"
+			case "last":
+				if lastCommand == "" {
 					mess.Text = "Null"
 				} else {
-					mess.Text = c
+					mess.Text = lastCommand
 				}
 			case "":
 				continue
