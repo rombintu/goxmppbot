@@ -20,3 +20,16 @@ func TestGetPage(t *testing.T) {
 	// }
 	fmt.Println(data)
 }
+
+// func TestGetData(t *testing.T) {
+// 	bot := bot.NewBot()
+// 	if err := bot.ConfigureBackand(); err != nil {
+// 		bot.Logger.Error(err)
+// 		t.Fatal(err)
+// 	}
+// 	_, _, data, err := bot.Backend.GetPageUrlsAndNames()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	fmt.Println(data)
+// }

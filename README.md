@@ -19,6 +19,16 @@ docker-compose ps
 docker-compose logs -f bot
 ```
 
+### Mongo (dev)
+```
+docker run --name mongodb \ 
+    -e MONGO_INITDB_ROOT_USERNAME=<username> \ 
+    -e MONGO_INITDB_ROOT_PASSWORD=<passowrd> \ 
+    -e MONGO_INITDB_DATABASE=backend \ 
+    -v <some_path>/mongo:/data/db \ 
+    -d -p 27017:27017 mongo
+```
+
 ## Configuration (Example)
 ```toml
 [DEFAULT]
@@ -42,7 +52,4 @@ URL = "Адрес до контактов" # Example: "https://mail.ru/contacts"
 [BACKENDCONF]
 CONNECTION= "Путь до локальной базы данных" # Example: "sqlite.db"
 DEV=true # Рабоать в режиме разработки
-
-[LINKS] # Перечисление сервисов
-service_name = "НАЗВАНИЕ_СЕРВИСА - ссылка"
 ```

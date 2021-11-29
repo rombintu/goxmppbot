@@ -159,12 +159,12 @@ func (bot *Bot) HandleMessage() error {
 				// 	bot.SendMessage(mess)
 				// 	continue
 				// }
-				buff := ""
+				// buff := ""
 				for i, q := range data.Questions {
-					buff += fmt.Sprintf("Вопрос %d:\n%s\n\tОтвет: %s\n ---\n", i+1, q.Subquestion[i], q.Subanswer[i])
+					mess.Text = fmt.Sprintf("Вопрос: *%s*\n\tОтвет: %s\n ---\n", q.Subquestion[i], q.Subanswer[i])
+					bot.SendMessage(mess)
 				}
-				mess.Text = buff
-				bot.SendMessage(mess)
+				// bot.SendMessage(mess)
 				continue
 			case reserv["refresh"]:
 				if userText != bot.Config.Default.RefreshSecret {
@@ -172,7 +172,7 @@ func (bot *Bot) HandleMessage() error {
 				}
 				mess.Text = "Выполняется"
 				bot.SendMessage(mess)
-				urls, err := bot.Backend.GetPageUrls()
+				urls, _, err := bot.Backend.GetPageUrlsAndNames()
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
@@ -186,7 +186,7 @@ func (bot *Bot) HandleMessage() error {
 						bot.SendMessage(mess)
 						continue
 					}
-					if err := bot.Backend.PutPage(page, u); err != nil {
+					if err := bot.Backend.UpdatePage(page, u); err != nil {
 						bot.Logger.Error(err)
 						mess.Text = ToError(err)
 						bot.SendMessage(mess)
@@ -225,12 +225,13 @@ func (bot *Bot) HandleMessage() error {
 			case reserv["services"]:
 				buff := "Напишите НАЗВАНИЕ_СЕРВИСА по которому необходима консультация\n"
 				buff += "Примечание: Можно использовать нижний регистр\n"
-				names, err := bot.Backend.GetAllServiceName()
+				_, names, err := bot.Backend.GetPageUrlsAndNames()
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
 					continue
 				}
+
 				for i, n := range names {
 					buff += fmt.Sprintf("\t%d. %s\n", i+1, strings.ToTitle(n))
 				}
