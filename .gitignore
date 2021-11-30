@@ -11,3 +11,4 @@ main
 # Databases
 *.db
 mongo*
+postgres*

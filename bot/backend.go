@@ -40,22 +40,41 @@ func (b *Backend) Init() error {
 		return err
 	}
 	defer b.Close()
-	if _, err := b.Driver.Exec(`
+	if b.Config.Dev {
+		if _, err := b.Driver.Exec(`
 	CREATE TABLE IF NOT EXISTS backend (
 		id INTEGER PRIMARY KEY AUTOINCREMENT, 
 		hlogin VARCHAR(50), 
 		command VARCHAR(50));`); err != nil {
-		return err
-	}
-	if _, err := b.Driver.Exec(`
+			return err
+		}
+		if _, err := b.Driver.Exec(`
 	CREATE TABLE IF NOT EXISTS questions (
 		id INTEGER PRIMARY KEY AUTOINCREMENT, 
 		name VARCHAR(50) UNIQUE,
 		url VARCHAR(50) UNIQUE, 
 		data BLOB);`); err != nil {
-		return err
+			return err
+		}
+		return nil
+	} else {
+		if _, err := b.Driver.Exec(`
+	CREATE TABLE IF NOT EXISTS backend (
+		id SERIAL, 
+		hlogin VARCHAR(50), 
+		command VARCHAR(50));`); err != nil {
+			return err
+		}
+		if _, err := b.Driver.Exec(`
+	CREATE TABLE IF NOT EXISTS questions (
+		id SERIAL, 
+		name VARCHAR(50) UNIQUE,
+		url VARCHAR(50) UNIQUE, 
+		data BYTEA);`); err != nil {
+			return err
+		}
+		return nil
 	}
-	return nil
 }
 
 func (b *Backend) Open() error {
