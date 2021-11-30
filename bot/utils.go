@@ -40,6 +40,16 @@ const (
 `
 )
 
+var reserv = map[string]string{
+	"help":       "помощь",
+	"support":    "поддержка",
+	"search":     "поиск",
+	"start":      "старт",
+	"services":   "сервисы",
+	"refresh":    "/refresh",
+	"addservice": "/addservice",
+}
+
 // Action on /start
 func OnStart() string {
 	var submess string
