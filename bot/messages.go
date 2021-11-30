@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	xmpp "github.com/mattn/go-xmpp"
 )
@@ -66,26 +67,44 @@ func (bot *Bot) SendError(err error) {
 
 // Loop func, listening command from users
 func (bot *Bot) HandleMessage() {
+	mainCh := make(chan interface{})
 
+	go bot.Handler(mainCh)
 	for {
 		data, err := bot.Client.Recv()
 		if err != nil {
 			bot.Logger.Error(err)
 		}
+		mainCh <- data
+	}
 
-		switch data.(type) {
-		case xmpp.Chat:
-			if data.(xmpp.Chat).Text == "" || data.(xmpp.Chat).Text == " " {
-				continue
+}
+
+func (bot *Bot) Handler(c chan interface{}) {
+	timeCh := time.NewTicker(2 * time.Minute)
+	for {
+		select {
+		case data, open := <-c:
+			if !open {
+				break
 			}
-			if err := bot.Run(data); err != nil {
-				bot.Logger.Error(err)
+			switch data.(type) {
+			case xmpp.Chat:
+				if err := bot.Run(data); err != nil {
+					bot.Logger.Error(err)
+				}
 			}
+		case <-timeCh.C:
+			bot.Logger.Info("TODO - UPDATE")
+			// TODO
 		}
 	}
 }
 
 func (bot *Bot) Run(data interface{}) error {
+	if data.(xmpp.Chat).Text == "" || data.(xmpp.Chat).Text == " " {
+		return nil
+	}
 	bot.Logger.Info(data)
 	mess := CreateMessage()
 	from := data.(xmpp.Chat).Remote
