@@ -24,3 +24,13 @@ PASSWORD="password"
 SSLMODE="disable"
 DATABASE="backend"
 DEV=true
+MULTI=true
+
+[BACKENDCONF_SLAVE]
+HOST="localhost"
+PORT="5432"
+USER="root"
+PASSWORD="root"
+SSLMODE="disable"
+DATABASE="root"
+DEV=false
