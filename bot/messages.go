@@ -149,6 +149,7 @@ func (bot *Bot) HandleMessage() error {
 					bot.SendMessage(mess)
 					continue
 				}
+        
 				if len(data) == 0 {
 					mess.Text = notFound
 					bot.SendMessage(mess)
@@ -166,7 +167,6 @@ func (bot *Bot) HandleMessage() error {
 					mess.Text = fmt.Sprintf("Вопрос: *%s*\n\tОтвет: %s\n ---\n", q.Subquestion[i], q.Subanswer[i])
 					bot.SendMessage(mess)
 				}
-
 				continue
 			case reserv["refresh"]:
 				if userText != bot.Config.Default.RefreshSecret {

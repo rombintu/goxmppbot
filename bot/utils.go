@@ -103,7 +103,7 @@ func ToLower(text string) string {
 }
 
 func ToError(err error) string {
-	return "Произошла внутренняя ошибка: " + err.Error()
+	return internalError + err.Error()
 }
 
 func GetHash(login string) string {
