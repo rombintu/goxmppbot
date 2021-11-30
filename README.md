@@ -59,5 +59,15 @@ USER="user"
 PASSWORD="password"
 SSLMODE="disable"
 DATABASE="backend"
-DEV=true
+DEV=true # Подключается к локальной базе ./sqlite.db
+MULTI=true # Включает поддержку мультиподключения
+
+[BACKENDCONF_SLAVE]
+HOST="localhost"
+PORT="5432"
+USER="root"
+PASSWORD="root"
+SSLMODE="disable"
+DATABASE="root"
+DEV=false
 ```

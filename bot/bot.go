@@ -38,14 +38,16 @@ type BackendConf struct {
 	SSLMode      string `toml:"SSLMODE"`
 	DatabaseName string `toml:"DATABASE"`
 	Dev          bool   `toml:"DEV"`
+	Multi        bool   `toml:"MULTI"`
 }
 
 type Config struct {
-	Default     Default           `toml:"DEFAULT"`
-	Support     Support           `toml:"SUPPORT"`
-	Contacts    Contacts          `toml:"CONTACTS"`
-	BackendConf BackendConf       `toml:"BACKENDCONF"`
-	Links       map[string]string `toml:"LINKS"`
+	Default          Default           `toml:"DEFAULT"`
+	Support          Support           `toml:"SUPPORT"`
+	Contacts         Contacts          `toml:"CONTACTS"`
+	BackendConf      BackendConf       `toml:"BACKENDCONF"`
+	BackendConfSlave BackendConf       `toml:"BACKENDCONF_SLAVE"`
+	Links            map[string]string `toml:"LINKS"`
 }
 
 // Struct BOT
@@ -92,7 +94,7 @@ func (bot *Bot) configureLogger() error {
 }
 
 func (bot *Bot) ConfigureBackand() error {
-	bot.Backend = NewBackend(bot.Config.BackendConf)
+	bot.Backend = NewBackend(bot.Config.BackendConf, bot.Config.BackendConfSlave)
 	if err := bot.Backend.Init(); err != nil {
 		return err
 	}
