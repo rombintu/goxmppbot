@@ -21,12 +21,14 @@ docker-compose logs -f bot
 
 ### Mongo (dev)
 ```
-docker run --name mongodb \ 
-    -e MONGO_INITDB_ROOT_USERNAME=<username> \ 
-    -e MONGO_INITDB_ROOT_PASSWORD=<passowrd> \ 
-    -e MONGO_INITDB_DATABASE=backend \ 
-    -v <some_path>/mongodb:/data/db \ 
-    -d -p 27017:27017 mongo
+docker run -d \
+    --name postgres \
+    -e POSTGRES_DB=DATABASE \
+    -e POSTGRES_USER=USER \
+    -e POSTGRES_PASSWORD=PASSWORD \
+    -e PGDATA=/var/lib/postgresql/data/pgdata \
+    -v /custom/mount:/var/lib/postgresql/data \
+    postgres:14-alpine
 ```
 
 ## Configuration (Example)
@@ -49,7 +51,13 @@ SUPPORTEMAIL = "Полный логин поддержки, куда идут п
 [CONTACTS]
 URL = "Адрес до контактов" # Example: "https://mail.ru/contacts"
 
+# Значение из ENV в приоритете
 [BACKENDCONF]
-CONNECTION="mongodb://root:root@192.168.0.2:27017" # Значение из ENV в приоритете
-DBNAME="backend"
+HOST="localhost"
+PORT="5432"
+USER="user"
+PASSWORD="password"
+SSLMODE="disable"
+DATABASE="backend"
+DEV=true
 ```

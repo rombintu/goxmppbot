@@ -4,16 +4,24 @@ services:
     build: .
     restart: always
     depends_on:
-      - mongo
+      - db
     environment:
-      - MONGODB=mongodb://root:root@mongo/
-  mongo:
-    image: mongo
+      - HOST=db
+      - PORT=5432
+      - USER=user
+      - PASSWORD=password
+      - SSLMODE=disable
+      - DATABASE=backend
+  db:
+    image: postgres:14-alpine
     restart: always
+    ports:
+      - "5432:5432"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root
-      MONGO_INITDB_DATABASE: backend
+      POSTGRES_DB=backend
+      POSTGRES_USER=user
+      POSTGRES_PASSWORD=password
+      PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - ./mongodb/data:/data/db
+      - ./postgres/data:/var/lib/postgresql/data
   

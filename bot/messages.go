@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -125,6 +126,7 @@ func (bot *Bot) HandleMessage() error {
 			case reserv["support"]:
 				emailData, err := ParseSubjectAndBody(userText)
 				if err != nil {
+					bot.Logger.Error(err)
 					mess.Text = err.Error()
 					bot.SendMessage(mess)
 					continue
@@ -147,12 +149,21 @@ func (bot *Bot) HandleMessage() error {
 					bot.SendMessage(mess)
 					continue
 				}
-				if len(data.Questions) == 0 {
+        
+				if len(data) == 0 {
 					mess.Text = notFound
 					bot.SendMessage(mess)
 					continue
 				}
-				for i, q := range data.Questions {
+				var page Page
+				if err := json.Unmarshal(data, &page); err != nil {
+					bot.Logger.Error(err)
+					mess.Text = ToError(err)
+					bot.SendMessage(mess)
+					continue
+				}
+
+				for i, q := range page.Questions {
 					mess.Text = fmt.Sprintf("Вопрос: *%s*\n\tОтвет: %s\n ---\n", q.Subquestion[i], q.Subanswer[i])
 					bot.SendMessage(mess)
 				}
@@ -167,6 +178,7 @@ func (bot *Bot) HandleMessage() error {
 				if err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
 				for _, u := range urls {
@@ -196,11 +208,13 @@ func (bot *Bot) HandleMessage() error {
 				bot.SendMessage(mess)
 				if len(text) != 3 {
 					mess.Text = ToError(errors.New(fewArguments))
+					bot.SendMessage(mess)
 					continue
 				}
 				if err := bot.Backend.PutNewPage(text[1], text[2]); err != nil {
 					bot.Logger.Error(err)
 					mess.Text = ToError(err)
+					bot.SendMessage(mess)
 					continue
 				}
 				mess.Text = dbUpdated
