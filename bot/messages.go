@@ -2,7 +2,6 @@ package bot
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -59,8 +58,7 @@ func (bot *Bot) OnSupport(user, subject, body string) (string, error) {
 	return "Ваша заявка отправлена в обработку", nil
 }
 
-func (bot *Bot) SendError(err error) {
-	mess := CreateMessage()
+func (bot *Bot) SendError(mess xmpp.Chat, err error) {
 	mess.Text = err.Error()
 	bot.SendMessage(mess)
 }
@@ -81,7 +79,7 @@ func (bot *Bot) HandleMessage() {
 }
 
 func (bot *Bot) Handler(c chan interface{}) {
-	timeCh := time.NewTicker(2 * time.Minute)
+	timeCh := time.NewTicker(5 * time.Minute)
 	for {
 		select {
 		case data, open := <-c:
@@ -114,7 +112,7 @@ func (bot *Bot) Run(data interface{}) error {
 
 	lastCommand, err := bot.Backend.GetLastCommand(GetHash(from))
 	if err != nil {
-		bot.SendError(err)
+		bot.SendError(mess, err)
 		return err
 	}
 
@@ -129,7 +127,7 @@ func (bot *Bot) Run(data interface{}) error {
 		}
 		resp, err := GetUserByRegex(target[0], bot.Config.Contacts.Url, count)
 		if err != nil {
-			bot.SendError(err)
+			bot.SendError(mess, err)
 			return err
 		}
 		if len(resp) == 0 {
@@ -142,12 +140,12 @@ func (bot *Bot) Run(data interface{}) error {
 	case reserv["support"]:
 		emailData, err := ParseSubjectAndBody(userText)
 		if err != nil {
-			bot.SendError(err)
+			bot.SendError(mess, err)
 			return err
 		}
 		resp, err := bot.OnSupport(from, emailData[0], emailData[1])
 		if err != nil {
-			bot.SendError(err)
+			bot.SendError(mess, err)
 			return err
 		}
 		mess.Text = resp
@@ -155,7 +153,7 @@ func (bot *Bot) Run(data interface{}) error {
 	case reserv["services"]:
 		data, err := bot.Backend.GetJsonByName(ToLower(userText))
 		if err != nil {
-			bot.SendError(err)
+			bot.SendError(mess, err)
 			return err
 		}
 
@@ -166,7 +164,7 @@ func (bot *Bot) Run(data interface{}) error {
 		}
 		var page Page
 		if err := json.Unmarshal(data, &page); err != nil {
-			bot.SendError(err)
+			bot.SendError(mess, err)
 			return err
 		}
 
@@ -182,17 +180,17 @@ func (bot *Bot) Run(data interface{}) error {
 		bot.SendMessage(mess)
 		urls, _, err := bot.Backend.GetPageUrlsAndNames()
 		if err != nil {
-			bot.SendError(err)
+			bot.SendError(mess, err)
 			return err
 		}
 		for _, u := range urls {
 			page, err := GetPage(u)
 			if err != nil {
-				bot.SendError(err)
+				bot.SendError(mess, err)
 				return err
 			}
 			if err := bot.Backend.UpdatePage(page, u); err != nil {
-				bot.SendError(err)
+				bot.SendError(mess, err)
 				return err
 			}
 		}
@@ -200,18 +198,14 @@ func (bot *Bot) Run(data interface{}) error {
 		bot.SendMessage(mess)
 	case reserv["addservice"]:
 		text := strings.Split(userText, "|")
-		if text[0] != bot.Config.Default.RefreshSecret {
+		if text[0] != bot.Config.Default.RefreshSecret || len(text) != 3 {
 			return nil
 		}
 		mess.Text = loading
 		bot.SendMessage(mess)
-		if len(text) != 3 {
-			err := errors.New(fewArguments)
-			bot.SendError(err)
-			return err
-		}
+
 		if err := bot.Backend.PutNewPage(text[1], text[2]); err != nil {
-			bot.SendError(err)
+			bot.SendError(mess, err)
 			return err
 		}
 		mess.Text = dbUpdated
@@ -226,39 +220,44 @@ func (bot *Bot) Run(data interface{}) error {
 			buff := serviceHelpMessage
 			_, names, err := bot.Backend.GetPageUrlsAndNames()
 			if err != nil {
-				bot.SendError(err)
+				bot.SendError(mess, err)
 				return err
 			}
 
-			for i, n := range names {
-				buff += fmt.Sprintf("\t%d. %s\n", i+1, strings.ToTitle(n))
+			if len(names) == 0 {
+				buff += "\t[Сервисы не найдены в базе данных]"
+			} else {
+				for i, n := range names {
+					buff += fmt.Sprintf("\t%d. %s\n", i+1, strings.ToTitle(n))
+				}
 			}
+
 			mess.Text = buff
 			if err := bot.Backend.PutCommand(GetHash(from), reserv["services"]); err != nil {
-				bot.SendError(err)
+				bot.SendError(mess, err)
 				return err
 			}
 		case reserv["support"]:
 			mess.Text = supportHelpMessage
 			if err := bot.Backend.PutCommand(GetHash(from), reserv["support"]); err != nil {
-				bot.SendError(err)
+				bot.SendError(mess, err)
 				return err
 			}
 		case reserv["search"]:
 			mess.Text = searchHelpMessage
 			if err := bot.Backend.PutCommand(GetHash(from), reserv["search"]); err != nil {
-				bot.SendError(err)
+				bot.SendError(mess, err)
 				return err
 			}
 		case reserv["refresh"]:
 			if err := bot.Backend.PutCommand(GetHash(from), reserv["refresh"]); err != nil {
-				bot.SendError(err)
+				bot.SendError(mess, err)
 				return err
 			}
 			mess.Text = "Enter password"
 		case reserv["addservice"]:
 			if err := bot.Backend.PutCommand(GetHash(from), reserv["addservice"]); err != nil {
-				bot.SendError(err)
+				bot.SendError(mess, err)
 				return err
 			}
 			mess.Text = "password|name|url"

@@ -14,6 +14,7 @@ type Backend struct {
 	ConfigMaster *BackendConf
 	DriverSlave  *sql.DB
 	ConfigSlave  *BackendConf
+	DriverLocal  *sql.DB
 }
 
 type UserBack struct {
@@ -65,13 +66,6 @@ func (b *Backend) Init() error {
 func CreateTables(driver *sql.DB, dev bool) error {
 	if dev {
 		if _, err := driver.Exec(`
-	CREATE TABLE IF NOT EXISTS backend (
-		id INTEGER PRIMARY KEY AUTOINCREMENT, 
-		hlogin VARCHAR(50), 
-		command VARCHAR(50));`); err != nil {
-			return err
-		}
-		if _, err := driver.Exec(`
 	CREATE TABLE IF NOT EXISTS questions (
 		id INTEGER PRIMARY KEY AUTOINCREMENT, 
 		name VARCHAR(50) UNIQUE,
@@ -82,13 +76,6 @@ func CreateTables(driver *sql.DB, dev bool) error {
 		return nil
 	} else {
 		if _, err := driver.Exec(`
-	CREATE TABLE IF NOT EXISTS backend (
-		id SERIAL, 
-		hlogin VARCHAR(50), 
-		command VARCHAR(50));`); err != nil {
-			return err
-		}
-		if _, err := driver.Exec(`
 	CREATE TABLE IF NOT EXISTS questions (
 		id SERIAL, 
 		name VARCHAR(50) UNIQUE,
@@ -98,6 +85,30 @@ func CreateTables(driver *sql.DB, dev bool) error {
 		}
 		return nil
 	}
+}
+
+func (b *Backend) CreateTmpDatabase() error {
+	if err := b.OpenTmpDatabase(); err != nil {
+		return err
+	}
+	defer b.CloseLocal()
+	if _, err := b.DriverLocal.Exec(`
+	CREATE TABLE IF NOT EXISTS backend (
+		id SERIAL, 
+		hlogin VARCHAR(50), 
+		command VARCHAR(50));`); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Backend) OpenTmpDatabase() error {
+	db, err := sql.Open("sqlite3", "./sqlite.db")
+	if err != nil {
+		return err
+	}
+	b.DriverLocal = db
+	return nil
 }
 
 func (b *Backend) OpenMaster() error {
@@ -156,12 +167,16 @@ func (b *Backend) CloseSlave() error {
 	return b.DriverSlave.Close()
 }
 
+func (b *Backend) CloseLocal() error {
+	return b.DriverLocal.Close()
+}
+
 func (b *Backend) GetLastCommand(hlogin string) (string, error) {
-	if err := b.OpenMaster(); err != nil {
+	if err := b.OpenTmpDatabase(); err != nil {
 		return "", err
 	}
-	defer b.CloseMaster()
-	query, err := b.DriverMaster.Query("SELECT command FROM backend WHERE hlogin = $1 LIMIT 1", hlogin)
+	defer b.CloseLocal()
+	query, err := b.DriverLocal.Query("SELECT command FROM backend WHERE hlogin = $1 LIMIT 1", hlogin)
 	if err != nil {
 		return "", err
 	}
@@ -175,7 +190,7 @@ func (b *Backend) GetLastCommand(hlogin string) (string, error) {
 		return "", err
 	}
 
-	if _, err := b.DriverMaster.Exec("DELETE FROM backend WHERE hlogin = $1", hlogin); err != nil {
+	if _, err := b.DriverLocal.Exec("DELETE FROM backend WHERE hlogin = $1", hlogin); err != nil {
 		return "", err
 	}
 	return command, nil
@@ -195,11 +210,11 @@ func (b *Backend) GetLastCommand(hlogin string) (string, error) {
 // }
 
 func (b *Backend) PutCommand(hlogin, command string) error {
-	if err := b.OpenMaster(); err != nil {
+	if err := b.OpenTmpDatabase(); err != nil {
 		return err
 	}
-	defer b.CloseMaster()
-	_, err := b.DriverMaster.Exec(
+	defer b.CloseLocal()
+	_, err := b.DriverLocal.Exec(
 		"INSERT INTO backend (hlogin, command) VALUES ($1, $2)",
 		hlogin,
 		command,

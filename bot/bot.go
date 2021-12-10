@@ -98,6 +98,10 @@ func (bot *Bot) ConfigureBackand() error {
 	if err := bot.Backend.Init(); err != nil {
 		return err
 	}
+	bot.Logger.Info("Create TMP database")
+	if err := bot.Backend.CreateTmpDatabase(); err != nil {
+		return err
+	}
 	return nil
 }
 
