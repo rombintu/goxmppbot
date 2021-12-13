@@ -33,22 +33,6 @@ func (bot *Bot) SendMessage(chat xmpp.Chat) {
 	}
 }
 
-// Dev func
-func (bot *Bot) SendOOB(chat xmpp.Chat) {
-	_, err := bot.Client.SendOOB(chat)
-	if err != nil {
-		bot.Logger.Info(errorSend, err.Error())
-	}
-}
-
-// Dev func
-func (bot *Bot) SendORG(chat xmpp.Chat) {
-	_, err := bot.Client.SendOrg("message")
-	if err != nil {
-		bot.Logger.Info(errorSend, err.Error())
-	}
-}
-
 // Action on /support. Send mail to support
 func (bot *Bot) OnSupport(user, subject, body string) (string, error) {
 	if err := bot.SendToSupport(user, subject, body); err != nil {
@@ -111,7 +95,7 @@ func (bot *Bot) Run(data interface{}) error {
 	mess := CreateMessage()
 	from := data.(xmpp.Chat).Remote
 	mess.Remote = from
-	mess.Subject = "bothelper"
+	// mess.Subject = "bothelper"
 	userText := data.(xmpp.Chat).Text
 
 	lastCommand, err := bot.Backend.GetLastCommand(GetHash(from))
