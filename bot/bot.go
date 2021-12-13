@@ -105,6 +105,22 @@ func (bot *Bot) ConfigureBackand() error {
 	return nil
 }
 
+func (bot *Bot) ReConnnect() error {
+	client, err := xmpp.NewClientNoTLS(
+		bot.Config.Default.Host,
+		bot.Config.Default.Login,
+		bot.Config.Default.Password,
+		bot.Config.Default.DebugON,
+	)
+	if err != nil {
+		bot.Logger.Error("Error connect: ", err.Error())
+		return err
+	}
+	bot.Client = client
+	bot.Logger.Info("bot client reconnected")
+	return nil
+}
+
 // Try connect to server
 func (bot *Bot) Connect() error {
 	err := bot.configureLogger()

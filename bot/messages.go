@@ -79,7 +79,7 @@ func (bot *Bot) HandleMessage() {
 }
 
 func (bot *Bot) Handler(c chan interface{}) {
-	timeCh := time.NewTicker(5 * time.Minute)
+	timeCh := time.NewTicker(10 * time.Minute)
 	for {
 		select {
 		case data, open := <-c:
@@ -90,11 +90,15 @@ func (bot *Bot) Handler(c chan interface{}) {
 			case xmpp.Chat:
 				if err := bot.Run(data); err != nil {
 					bot.Logger.Error(err)
+					if err := bot.ReConnnect(); err != nil {
+						bot.Logger.Error(err)
+					}
 				}
 			}
 		case <-timeCh.C:
-			bot.Logger.Info("TODO - UPDATE")
-			// TODO
+			if err := bot.ReConnnect(); err != nil {
+				bot.Logger.Error(err)
+			}
 		}
 	}
 }
