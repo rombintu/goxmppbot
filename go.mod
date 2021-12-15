@@ -9,5 +9,5 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.9
 	github.com/mattn/go-xmpp v0.0.0-20210723025538-3871461df959
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.6.1 // indirect
+	github.com/xuri/excelize/v2 v2.4.1
 )

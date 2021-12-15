@@ -49,3 +49,17 @@ func TestSendOOB(t *testing.T) {
 	mess.Stamp.Add(10 * time.Second)
 	bot.SendMessage(mess)
 }
+
+func TestGetXslxFromUrl(t *testing.T) {
+	data, err := xmppbot.GetXslxFromUrl("http://0.0.0.0:8000/ЗНИ_СЭП_приклад.xlsx")
+	if err != nil {
+		t.Error(err)
+	}
+	rmap, err := xmppbot.OpenXslxFile(data)
+	if err != nil {
+		t.Error(err)
+	}
+	for k, v := range rmap {
+		fmt.Println(k, ":", v)
+	}
+}
