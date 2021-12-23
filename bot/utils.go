@@ -11,7 +11,7 @@ import (
 
 const (
 	notFound           string = "Ничего не найдено"
-	notFoundCommand    string = "Команда не найдена, попробуйте написать /help"
+	notFoundCommand    string = "Команда не найдена, попробуйте написать help"
 	loading            string = "Выполняется"
 	dbUpdated          string = "Готово, база обновлена"
 	fewArguments       string = "Мало аргументов"

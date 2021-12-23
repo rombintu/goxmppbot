@@ -98,13 +98,10 @@ func (bot *Bot) Run(data interface{}) error {
 	// mess.Subject = "bothelper"
 	userText := data.(xmpp.Chat).Text
 
-	lastCommand, err := bot.Backend.GetLastCommand(GetHash(from))
-	if err != nil {
-		bot.SendError(mess, err)
-		return err
-	}
+	lc := bot.LastCommands[GetHash(from)]
+	bot.LastCommands[GetHash(from)] = ""
 
-	switch lastCommand {
+	switch lc {
 	case reserv["search"]:
 		mess.Text = loading
 		bot.SendMessage(mess)
@@ -202,7 +199,7 @@ func (bot *Bot) Run(data interface{}) error {
 		switch ToLower(userText) {
 		case "/start", reserv["start"]:
 			mess.Text = OnStart()
-		case "/помощь", "/help", reserv["help"]:
+		case "/помощь", "help", reserv["help"]:
 			mess.Text = onHelp
 		case reserv["services"]:
 			buff := serviceHelpMessage
@@ -221,33 +218,18 @@ func (bot *Bot) Run(data interface{}) error {
 			}
 
 			mess.Text = buff
-			if err := bot.Backend.PutCommand(GetHash(from), reserv["services"]); err != nil {
-				bot.SendError(mess, err)
-				return err
-			}
+			bot.LastCommands[GetHash(from)] = reserv["services"]
 		case reserv["support"]:
 			mess.Text = supportHelpMessage
-			if err := bot.Backend.PutCommand(GetHash(from), reserv["support"]); err != nil {
-				bot.SendError(mess, err)
-				return err
-			}
+			bot.LastCommands[GetHash(from)] = reserv["support"]
 		case reserv["search"]:
 			mess.Text = searchHelpMessage
-			if err := bot.Backend.PutCommand(GetHash(from), reserv["search"]); err != nil {
-				bot.SendError(mess, err)
-				return err
-			}
+			bot.LastCommands[GetHash(from)] = reserv["search"]
 		case reserv["refresh"]:
-			if err := bot.Backend.PutCommand(GetHash(from), reserv["refresh"]); err != nil {
-				bot.SendError(mess, err)
-				return err
-			}
+			bot.LastCommands[GetHash(from)] = reserv["refresh"]
 			mess.Text = "Enter password"
 		case reserv["addservice"]:
-			if err := bot.Backend.PutCommand(GetHash(from), reserv["addservice"]); err != nil {
-				bot.SendError(mess, err)
-				return err
-			}
+			bot.LastCommands[GetHash(from)] = reserv["addservice"]
 			mess.Text = "password|name|url"
 		default:
 			mess.Text = notFoundCommand

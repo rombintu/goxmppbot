@@ -52,10 +52,11 @@ type Config struct {
 
 // Struct BOT
 type Bot struct {
-	Client  *xmpp.Client
-	Config  *Config
-	Logger  *logrus.Logger
-	Backend *Backend
+	Client       *xmpp.Client
+	Config       *Config
+	Logger       *logrus.Logger
+	Backend      *Backend
+	LastCommands map[string]string
 }
 
 // Return configuration
@@ -77,8 +78,9 @@ func GetConfig() *Config {
 // Return new bot
 func NewBot() *Bot {
 	return &Bot{
-		Config: GetConfig(),
-		Logger: logrus.New(),
+		Config:       GetConfig(),
+		Logger:       logrus.New(),
+		LastCommands: make(map[string]string),
 	}
 }
 
@@ -96,10 +98,6 @@ func (bot *Bot) configureLogger() error {
 func (bot *Bot) ConfigureBackand() error {
 	bot.Backend = NewBackend(bot.Config.BackendConf, bot.Config.BackendConfSlave)
 	if err := bot.Backend.Init(); err != nil {
-		return err
-	}
-	bot.Logger.Info("Create TMP database")
-	if err := bot.Backend.CreateTmpDatabase(); err != nil {
 		return err
 	}
 	return nil
