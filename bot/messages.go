@@ -80,6 +80,7 @@ func (bot *Bot) Handler(c chan interface{}) {
 				}
 			}
 		case <-timeCh.C:
+			bot.LastCommands = make(map[string]string)
 			if err := bot.ReConnnect(); err != nil {
 				bot.Logger.Error(err)
 			}
@@ -218,22 +219,19 @@ func (bot *Bot) Run(data interface{}) error {
 			}
 
 			mess.Text = buff
-			bot.LastCommands[GetHash(from)] = reserv["services"]
+
 		case reserv["support"]:
 			mess.Text = supportHelpMessage
-			bot.LastCommands[GetHash(from)] = reserv["support"]
 		case reserv["search"]:
 			mess.Text = searchHelpMessage
-			bot.LastCommands[GetHash(from)] = reserv["search"]
 		case reserv["refresh"]:
-			bot.LastCommands[GetHash(from)] = reserv["refresh"]
 			mess.Text = "Enter password"
 		case reserv["addservice"]:
-			bot.LastCommands[GetHash(from)] = reserv["addservice"]
 			mess.Text = "password|name|url"
 		default:
 			mess.Text = notFoundCommand
 		}
+		bot.LastCommands[GetHash(from)] = ToLower(userText)
 		bot.SendMessage(mess)
 	}
 
