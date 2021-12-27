@@ -11,7 +11,7 @@ import (
 func TestParseConfig(t *testing.T) {
 	bot := xmppbot.NewBot()
 
-	fmt.Println(bot.Config.Links)
+	fmt.Println(bot.Config)
 }
 
 func TestSendToSupport(t *testing.T) {

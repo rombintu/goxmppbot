@@ -2,37 +2,24 @@ package bot
 
 import (
 	"database/sql"
-	"fmt"
-	"os"
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Backend struct {
+type Drivers struct {
 	DriverMaster *sql.DB
-	ConfigMaster *BackendConf
 	DriverSlave  *sql.DB
-	ConfigSlave  *BackendConf
 }
 
-func NewBackend(backMaster, backSlave BackendConf) *Backend {
-	backend := Backend{
-		ConfigMaster: &backMaster,
-	}
-	if backMaster.Multi {
-		backend.ConfigSlave = &backSlave
-	} else {
-		backend.ConfigSlave = &backMaster
-	}
+type Backend struct {
+	Drivers Drivers
+	DBConf  *DBConf
+}
 
-	dbHostR := os.Getenv("HOST_READ")
-	dbHostW := os.Getenv("HOST_WRITE")
-	if dbHostR != "" {
-		backend.ConfigMaster.Host = dbHostR
-	}
-	if dbHostR != "" {
-		backend.ConfigSlave.Host = dbHostW
+func NewBackend(dbConf DBConf) *Backend {
+	backend := Backend{
+		DBConf: &dbConf,
 	}
 	return &backend
 }
@@ -41,19 +28,22 @@ func (b *Backend) Init() error {
 	if err := b.OpenMaster(); err != nil {
 		return err
 	}
-	if err := CreateTables(b.DriverMaster, b.ConfigMaster.Dev); err != nil {
+	if err := CreateTables(b.Drivers.DriverMaster, b.DBConf.Dev); err != nil {
 		return err
 	}
 	b.CloseMaster()
-	// if b.ConfigMaster.Multi {
-	// 	if err := b.OpenSlave(); err != nil {
-	// 		return err
-	// 	}
-	// 	if err := CreateTables(b.DriverSlave, b.ConfigMaster.Dev); err != nil {
-	// 		return err
-	// 	}
-	// 	b.CloseSlave()
-	// }
+
+	// Если включена мульти поддержка,
+	// то также создается таблица в Slave
+	if b.DBConf.Multi {
+		if err := b.OpenSlave(); err != nil {
+			return err
+		}
+		if err := CreateTables(b.Drivers.DriverSlave, false); err != nil {
+			return err
+		}
+		b.CloseSlave()
+	}
 	return nil
 }
 
@@ -82,59 +72,51 @@ func CreateTables(driver *sql.DB, dev bool) error {
 }
 
 func (b *Backend) OpenMaster() error {
-	if b.ConfigMaster.Dev {
+	if b.DBConf.Dev {
 		db, err := sql.Open("sqlite3", "./sqlite.db")
 		if err != nil {
 			return err
 		}
-		b.DriverMaster = db
+		b.Drivers.DriverMaster = db
 		return nil
 	} else {
-		conn := fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-			b.ConfigMaster.Host, b.ConfigMaster.Port, b.ConfigMaster.User,
-			b.ConfigMaster.Password, b.ConfigMaster.DatabaseName, b.ConfigMaster.SSLMode,
-		)
+		conn := b.DBConf.Master
 
 		db, err := sql.Open("postgres", conn)
 		if err != nil {
 			return err
 		}
-		b.DriverMaster = db
+		b.Drivers.DriverMaster = db
 		return nil
 	}
 }
 
 func (b *Backend) OpenSlave() error {
-	if b.ConfigSlave.Dev {
+	if b.DBConf.Dev {
 		db, err := sql.Open("sqlite3", "./sqlite.db")
 		if err != nil {
 			return err
 		}
-		b.DriverSlave = db
+		b.Drivers.DriverSlave = db
 		return nil
 	} else {
-		conn := fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-			b.ConfigSlave.Host, b.ConfigSlave.Port, b.ConfigSlave.User,
-			b.ConfigSlave.Password, b.ConfigSlave.DatabaseName, b.ConfigSlave.SSLMode,
-		)
+		conn := b.DBConf.Slave
 
 		db, err := sql.Open("postgres", conn)
 		if err != nil {
 			return err
 		}
-		b.DriverSlave = db
+		b.Drivers.DriverSlave = db
 		return nil
 	}
 }
 
 func (b *Backend) CloseMaster() error {
-	return b.DriverMaster.Close()
+	return b.Drivers.DriverMaster.Close()
 }
 
 func (b *Backend) CloseSlave() error {
-	return b.DriverSlave.Close()
+	return b.Drivers.DriverSlave.Close()
 }
 
 func (b *Backend) UpdatePage(data []byte, url string) error {
@@ -142,7 +124,7 @@ func (b *Backend) UpdatePage(data []byte, url string) error {
 		return err
 	}
 	defer b.CloseMaster()
-	_, err := b.DriverMaster.Exec(
+	_, err := b.Drivers.DriverMaster.Exec(
 		"UPDATE questions SET data = $1 WHERE url = $2",
 		data,
 		url,
@@ -158,7 +140,7 @@ func (b *Backend) PutNewPage(name, url string) error {
 		return err
 	}
 	defer b.CloseMaster()
-	_, err := b.DriverMaster.Exec(
+	_, err := b.Drivers.DriverMaster.Exec(
 		"INSERT INTO questions (name, url) VALUES ($1, $2)",
 		name,
 		url,
@@ -174,7 +156,7 @@ func (b *Backend) GetJsonByUrl(url string) ([]byte, error) {
 		return []byte{}, err
 	}
 	defer b.CloseSlave()
-	query, err := b.DriverSlave.Query("SELECT data FROM questions WHERE url = $1", url)
+	query, err := b.Drivers.DriverSlave.Query("SELECT data FROM questions WHERE url = $1", url)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -195,7 +177,7 @@ func (b *Backend) GetJsonByName(name string) ([]byte, error) {
 		return []byte{}, err
 	}
 	defer b.CloseSlave()
-	query, err := b.DriverSlave.Query("SELECT data FROM questions WHERE name = $1", name)
+	query, err := b.Drivers.DriverSlave.Query("SELECT data FROM questions WHERE name = $1", name)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -216,7 +198,7 @@ func (b *Backend) GetPageUrlsAndNames() ([]string, []string, error) {
 		return []string{}, []string{}, err
 	}
 	defer b.CloseSlave()
-	query, err := b.DriverSlave.Query("SELECT name, url FROM questions")
+	query, err := b.Drivers.DriverSlave.Query("SELECT name, url FROM questions")
 	if err != nil {
 		return []string{}, []string{}, err
 	}

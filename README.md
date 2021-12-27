@@ -34,45 +34,39 @@ docker run -d \
 ## Configuration (Example)
 ```toml
 [DEFAULT]
-HOST = "Хост учетной записи" # Example: "xmpp.mail.ru"
-LOGIN = "Логин учетной записи"
-PASSWORD = "Пароль учетной записи" 
-DEBUGLEVEL = "Уровень дебаг-лога" # [debug, info]
-DEBUG = true или false # Включить или выключить дебаг-лог
-REFRESH_SECRET = "1234"
+Host = "Хост учетной записи" # Example: "xmpp.mail.ru"
+Login = "Логин учетной записи"
+Password = "Пароль учетной записи" 
+DebugLevel = "Уровень дебаг-лога" # [debug, info]
+DebugOn = true или false # Включить или выключить дебаг-лог
+RefreshSecret = "1234"
 
 [SUPPORT]
-HOST = "Хост почты" # Example: "mail.ru"
-PORT = "Порт" # Example: "smtp"
-LOGIN = "Логин аккаунта поддержки, без хоста, от кого идут письма" # Example: "user" 
-PASSWORD = "Пароль аккаунта поддержки"
-SUPPORTEMAIL = "Полный логин поддержки, куда идут письма" # Example: "user@mail.ru"
+Host = "Хост почты" # Example: "mail.ru"
+Port = "Порт" # Example: "smtp"
+LoginWithoutHost = "Логин аккаунта поддержки, без хоста, от кого идут письма" # Example: "user" 
+Password = "Пароль аккаунта поддержки"
+SupportEmail = "Полный логин поддержки, куда идут письма" # Example: "user@mail.ru"
 
 [CONTACTS]
 URL = "Адрес до контактов" # Example: "https://mail.ru/contacts"
 
 # Значение из ENV в приоритете
-[BACKENDCONF]
-HOST="localhost"
-PORT="5432"
-USER="user"
-PASSWORD="password"
-SSLMODE="disable"
-DATABASE="backend"
-DEV=true # Подключается к локальной базе ./sqlite.db
-MULTI=true # Включает поддержку мультиподключения
-
-[BACKENDCONF_SLAVE]
-HOST="localhost"
-PORT="5432"
-USER="root"
-PASSWORD="root"
-SSLMODE="disable"
-DATABASE="root"
-DEV=false
+[DBCONF]
+Master = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
+Slave = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
+Dev = true
+Multi = false
 ```
 
 # Tags. Fix
+v0.4.2
+* Поддержка Zabbix
+* Исправления в драйверах БД
+
+v0.4.1
+* Мелкие исправления
+
 v0.4.0
 * Изменена логика запоминия предыдущих команд пользователя
 

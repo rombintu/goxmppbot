@@ -1,36 +1,23 @@
-[DEFAULT]
-HOST = ""
-LOGIN = ""
-PASSWORD = ""
-DEBUGLEVEL = "debug" # [debug, info]
-DEBUG = true
-REFRESH_SECRET = ""
+DEFAULT]
+Host = "mail.ru"
+Login = "user@mail.ru"
+Password = ""
+DebugLevel = "debug" # [debug, info]
+DebugOn = true
+RefreshSecret = ""
 
 [SUPPORT]
-HOST = ""
-PORT = "smtp"
-LOGIN = ""
-PASSWORD = ""
-SUPPORTEMAIL = ""
+Host = "mail.ru"
+Port = "smtp"
+LoginWithoutHost = "user" # FROM
+Password = ""
+SupportEmail = "user@mail.ru" # TO
 
 [CONTACTS]
 URL = ""
 
-[BACKENDCONF]
-HOST="localhost"
-PORT="5432"
-USER="user"
-PASSWORD="password"
-SSLMODE="disable"
-DATABASE="backend"
-DEV=true
-MULTI=true
-
-[BACKENDCONF_SLAVE]
-HOST="localhost"
-PORT="5432"
-USER="root"
-PASSWORD="root"
-SSLMODE="disable"
-DATABASE="root"
-DEV=false
+[DBCONF]
+Master = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
+Slave = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
+Dev = true
+Multi = false

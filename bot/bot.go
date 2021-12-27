@@ -10,44 +10,38 @@ import (
 )
 
 type Default struct {
-	Host          string `toml:"HOST"`
-	Login         string `toml:"LOGIN"`
-	Password      string `toml:"PASSWORD"`
-	DebugLevel    string `toml:"DEBUGLEVEL"`
-	DebugON       bool   `toml:"DEBUG"`
-	RefreshSecret string `toml:"REFRESH_SECRET"`
+	Host          string `toml:"Host"`
+	Login         string `toml:"Login"`
+	Password      string `toml:"Password"`
+	DebugLevel    string `toml:"DebugLevel"`
+	DebugON       bool   `toml:"DebugOn"`
+	RefreshSecret string `toml:"RefreshSecret"`
 }
 
 type Support struct {
-	Host         string `toml:"HOST"`
-	Port         string `toml:"PORT"`
-	Login        string `toml:"LOGIN"`
-	Password     string `toml:"PASSWORD"`
-	SupportEmail string `toml:"SUPPORTEMAIL"`
+	Host         string `toml:"Host"`
+	Port         string `toml:"Port"`
+	Login        string `toml:"LoginWithoutHost"`
+	Password     string `toml:"Password"`
+	SupportEmail string `toml:"SupportEmail"`
 }
 
 type Contacts struct {
 	Url string `toml:"URL"`
 }
 
-type BackendConf struct {
-	Host         string `toml:"HOST"`
-	Port         string `toml:"PORT"`
-	User         string `toml:"USER"`
-	Password     string `toml:"PASSWORD"`
-	SSLMode      string `toml:"SSLMODE"`
-	DatabaseName string `toml:"DATABASE"`
-	Dev          bool   `toml:"DEV"`
-	Multi        bool   `toml:"MULTI"`
+type DBConf struct {
+	Master string `toml:"Master"`
+	Slave  string `toml:"Slave"`
+	Dev    bool   `toml:"Dev"`
+	Multi  bool   `toml:"Multi"`
 }
 
 type Config struct {
-	Default          Default           `toml:"DEFAULT"`
-	Support          Support           `toml:"SUPPORT"`
-	Contacts         Contacts          `toml:"CONTACTS"`
-	BackendConf      BackendConf       `toml:"BACKENDCONF"`
-	BackendConfSlave BackendConf       `toml:"BACKENDCONF_SLAVE"`
-	Links            map[string]string `toml:"LINKS"`
+	Default  Default  `toml:"DEFAULT"`
+	Support  Support  `toml:"SUPPORT"`
+	Contacts Contacts `toml:"CONTACTS"`
+	DBConf   DBConf   `toml:"DBCONF"`
 }
 
 // Struct BOT
@@ -96,7 +90,7 @@ func (bot *Bot) configureLogger() error {
 }
 
 func (bot *Bot) ConfigureBackand() error {
-	bot.Backend = NewBackend(bot.Config.BackendConf, bot.Config.BackendConfSlave)
+	bot.Backend = NewBackend(bot.Config.DBConf)
 	if err := bot.Backend.Init(); err != nil {
 		return err
 	}
