@@ -2,11 +2,13 @@ package bot
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	xmpp "github.com/mattn/go-xmpp"
+	zabbixapi "github.com/rombintu/goxmppbot/plugins/zabbix-api"
 )
 
 // Return message chat-struct
@@ -228,6 +230,28 @@ func (bot *Bot) Run(data interface{}) error {
 			mess.Text = "Enter password"
 		case reserv["addservice"]:
 			mess.Text = "password|name|url"
+		case reserv["zabbix"], "заббикс", "забикс":
+			buff := ""
+			problems, err := bot.Plugins.Zabbix.GetProblems()
+			if err != nil || problems.Error.Message != "" {
+				bot.SendError(mess, err)
+				bot.SendError(mess, errors.New(problems.Error.Message))
+				return err
+			}
+			for i, p := range problems.Result {
+				ack := "Нет"
+				if p.Acknowledged == "1" {
+					ack = "Да"
+				}
+
+				clock, _ := zabbixapi.StrToTime(p.Clock)
+
+				buff += "--------\n"
+				buff += fmt.Sprintf(
+					"%d. [\n\tВремя: %s\n\tСообщение: %s\n\tРешено: %s\n]\n",
+					i+1, clock, p.Text, ack)
+			}
+			mess.Text = buff
 		default:
 			mess.Text = notFoundCommand
 		}

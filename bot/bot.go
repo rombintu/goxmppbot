@@ -6,6 +6,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	xmpp "github.com/mattn/go-xmpp"
+	zabbixapi "github.com/rombintu/goxmppbot/plugins/zabbix-api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,10 +39,11 @@ type DBConf struct {
 }
 
 type Config struct {
-	Default  Default  `toml:"DEFAULT"`
-	Support  Support  `toml:"SUPPORT"`
-	Contacts Contacts `toml:"CONTACTS"`
-	DBConf   DBConf   `toml:"DBCONF"`
+	Default  Default    `toml:"DEFAULT"`
+	Support  Support    `toml:"SUPPORT"`
+	Contacts Contacts   `toml:"CONTACTS"`
+	DBConf   DBConf     `toml:"DBCONF"`
+	Zabbix   ZabbixConf `toml:"ZABBIX"`
 }
 
 // Struct BOT
@@ -51,6 +53,11 @@ type Bot struct {
 	Logger       *logrus.Logger
 	Backend      *Backend
 	LastCommands map[string]string
+	Plugins      Plugins
+}
+
+type Plugins struct {
+	Zabbix zabbixapi.Zabbix
 }
 
 // Return configuration
@@ -95,6 +102,16 @@ func (bot *Bot) ConfigureBackand() error {
 		return err
 	}
 	return nil
+}
+
+func (bot *Bot) ConfigurePlugins() {
+	// enable zabbix-api
+	bot.Plugins.Zabbix = zabbixapi.NewZabbix(
+		bot.Config.Zabbix.Host,
+		bot.Config.Zabbix.User,
+		bot.Config.Zabbix.Pass,
+	)
+	bot.Logger.Info("bot plugins enabled")
 }
 
 func (bot *Bot) ReConnnect() error {

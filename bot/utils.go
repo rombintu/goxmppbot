@@ -48,6 +48,7 @@ var reserv = map[string]string{
 	"services":   "сервисы",
 	"refresh":    "/refresh",
 	"addservice": "/addservice",
+	"zabbix":     "zabbix",
 }
 
 // Action on /start

@@ -5,6 +5,7 @@ Password = ""
 DebugLevel = "debug" # [debug, info]
 DebugOn = true
 RefreshSecret = ""
+ZabbixOn = true
 
 [SUPPORT]
 Host = "mail.ru"
@@ -21,3 +22,8 @@ Master = "host=localhost port=5432 user=user password=password dbname=backend ss
 Slave = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
 Dev = true
 Multi = false
+
+[ZABBIX]
+Host = ""
+User = ""
+Password = ""

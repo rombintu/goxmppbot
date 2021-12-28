@@ -3,6 +3,7 @@
 *.tar.*
 # Private
 config.toml
+plugins/zabbix-api/test.http
 
 # Bin
 main

@@ -40,6 +40,7 @@ Password = "Пароль учетной записи"
 DebugLevel = "Уровень дебаг-лога" # [debug, info]
 DebugOn = true или false # Включить или выключить дебаг-лог
 RefreshSecret = "1234"
+ZabbixOn = true
 
 [SUPPORT]
 Host = "Хост почты" # Example: "mail.ru"
@@ -57,9 +58,19 @@ Master = "host=localhost port=5432 user=user password=password dbname=backend ss
 Slave = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
 Dev = true
 Multi = false
+
+[ZABBIX]
+Host = ""
+User = ""
+Password = ""
 ```
 
 # Tags. Fix
+v0.4.3-unstable
+* Написана своя библиотека для работы с Zabbix
+* Возможность подключение плагинов
+* Исправления
+
 v0.4.2
 * Поддержка Zabbix
 * Исправления в драйверах БД
