@@ -40,7 +40,7 @@ Password = "Пароль учетной записи"
 DebugLevel = "Уровень дебаг-лога" # [debug, info]
 DebugOn = true или false # Включить или выключить дебаг-лог
 RefreshSecret = "1234"
-ZabbixOn = true
+Plugins = ["zabbix"]
 
 [SUPPORT]
 Host = "Хост почты" # Example: "mail.ru"
@@ -66,6 +66,11 @@ Password = ""
 ```
 
 # Tags. Fix
+v0.4.4 
+* Исправления в плагинах
+* Исправления в конфигурации
+* TODO - Обновление токена
+
 v0.4.3-unstable
 * Написана своя библиотека для работы с Zabbix
 * Возможность подключение плагинов

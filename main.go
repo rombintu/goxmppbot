@@ -23,9 +23,13 @@ func main() {
 	bot.Logger.Info("Bot connected")
 
 	// Plugins
-	bot.ConfigurePlugins()
-	bot.Plugins.Zabbix.GetToken()
-	bot.Logger.Info("Bot token - OK")
+	for _, plugin := range bot.Config.Default.Plugins {
+		if plugin == "zabbix" {
+			bot.ConfigurePlugins()
+			bot.Plugins.Zabbix.GetToken()
+			bot.Logger.Info("Bot token - OK")
+		}
+	}
 
 	exitCh := make(chan os.Signal)
 	signal.Notify(exitCh, os.Interrupt, syscall.SIGTERM)

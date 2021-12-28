@@ -17,6 +17,7 @@ const (
 	fewArguments       string = "Мало аргументов"
 	errorSend          string = "Error send message: "
 	internalError      string = "Произошла внутренняя ошибка: "
+	pluginNotEnabled   string = "Плагин не подключен"
 	supportHelpMessage string = `
 Напишите НАЗВАНИЕ_СЕРВИСА письмо
 Пример: *СУДИС Все сломалось, помогите*

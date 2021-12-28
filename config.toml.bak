@@ -5,7 +5,7 @@ Password = ""
 DebugLevel = "debug" # [debug, info]
 DebugOn = true
 RefreshSecret = ""
-ZabbixOn = true
+Plugins = ["zabbix"]
 
 [SUPPORT]
 Host = "mail.ru"

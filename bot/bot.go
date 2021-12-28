@@ -6,17 +6,18 @@ import (
 
 	"github.com/BurntSushi/toml"
 	xmpp "github.com/mattn/go-xmpp"
-	zabbixapi "github.com/rombintu/goxmppbot/plugins/zabbix-api"
+	zabbixapi "github.com/rombintu/zabbix-api"
 	"github.com/sirupsen/logrus"
 )
 
 type Default struct {
-	Host          string `toml:"Host"`
-	Login         string `toml:"Login"`
-	Password      string `toml:"Password"`
-	DebugLevel    string `toml:"DebugLevel"`
-	DebugON       bool   `toml:"DebugOn"`
-	RefreshSecret string `toml:"RefreshSecret"`
+	Host          string   `toml:"Host"`
+	Login         string   `toml:"Login"`
+	Password      string   `toml:"Password"`
+	DebugLevel    string   `toml:"DebugLevel"`
+	DebugON       bool     `toml:"DebugOn"`
+	RefreshSecret string   `toml:"RefreshSecret"`
+	Plugins       []string `toml:"Plugins"`
 }
 
 type Support struct {
@@ -44,6 +45,13 @@ type Config struct {
 	Contacts Contacts   `toml:"CONTACTS"`
 	DBConf   DBConf     `toml:"DBCONF"`
 	Zabbix   ZabbixConf `toml:"ZABBIX"`
+}
+
+// Struct for Zabbix-api
+type ZabbixConf struct {
+	Host string `toml:"Host"`
+	User string `toml:"User"`
+	Pass string `toml:"Password"`
 }
 
 // Struct BOT
@@ -111,7 +119,7 @@ func (bot *Bot) ConfigurePlugins() {
 		bot.Config.Zabbix.User,
 		bot.Config.Zabbix.Pass,
 	)
-	bot.Logger.Info("bot plugins enabled")
+	bot.Logger.Info("Bot plugins enabled")
 }
 
 func (bot *Bot) ReConnnect() error {
@@ -126,7 +134,7 @@ func (bot *Bot) ReConnnect() error {
 		return err
 	}
 	bot.Client = client
-	bot.Logger.Info("bot client reconnected")
+	bot.Logger.Info("Bot client reconnected")
 	return nil
 }
 

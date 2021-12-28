@@ -6,7 +6,7 @@ import (
 	"time"
 
 	xmppbot "github.com/rombintu/goxmppbot/bot"
-	zabbixapi "github.com/rombintu/goxmppbot/plugins/zabbix-api"
+	zabbixapi "github.com/rombintu/zabbix-api"
 )
 
 func TestParseConfig(t *testing.T) {
@@ -65,21 +65,21 @@ func TestGetXslxFromUrl(t *testing.T) {
 	}
 }
 
-func TestZabbixConn(t *testing.T) {
-	z := xmppbot.NewZabbix("http://192.168.213.127/zabbix/api_jsonrpc.php", "*", "*")
-	z.GetHosts()
-	// z.GetHistory()
-	// z.GetActions()
-	// for _, h := range z.Hosts {
-	// 	fmt.Println(h.Host, h.HostID, h.)
-	// }
-	fmt.Println("-----------")
-	// for _, hist := range *z.History {
-	// 	fmt.Println(hist.Value)
-	// }
-	// fmt.Println(z.History)
-	fmt.Printf("%+v", z.Hosts)
-}
+// func TestZabbixConn(t *testing.T) {
+// 	z := xmppbot.NewZabbix("http://192.168.213.127/zabbix/api_jsonrpc.php", "*", "*")
+// 	z.GetHosts()
+// 	// z.GetHistory()
+// 	// z.GetActions()
+// 	// for _, h := range z.Hosts {
+// 	// 	fmt.Println(h.Host, h.HostID, h.)
+// 	// }
+// 	fmt.Println("-----------")
+// 	// for _, hist := range *z.History {
+// 	// 	fmt.Println(hist.Value)
+// 	// }
+// 	// fmt.Println(z.History)
+// 	fmt.Printf("%+v", z.Hosts)
+// }
 
 func TestGetTokenZabbix(t *testing.T) {
 	z := zabbixapi.NewZabbix("192.168.213.127", "Admin", "zabbix")

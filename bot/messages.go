@@ -8,7 +8,7 @@ import (
 	"time"
 
 	xmpp "github.com/mattn/go-xmpp"
-	zabbixapi "github.com/rombintu/goxmppbot/plugins/zabbix-api"
+	zabbixapi "github.com/rombintu/zabbix-api"
 )
 
 // Return message chat-struct
@@ -232,6 +232,17 @@ func (bot *Bot) Run(data interface{}) error {
 			mess.Text = "password|name|url"
 		case reserv["zabbix"], "заббикс", "забикс":
 			buff := ""
+			on := false
+			for _, plugin := range bot.Config.Default.Plugins {
+				if plugin == "zabbix" {
+					on = true
+				}
+
+			}
+			if !on {
+				bot.SendError(mess, errors.New(pluginNotEnabled))
+				return nil
+			}
 			problems, err := bot.Plugins.Zabbix.GetProblems()
 			if err != nil || problems.Error.Message != "" {
 				bot.SendError(mess, err)
