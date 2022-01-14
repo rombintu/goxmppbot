@@ -8,7 +8,6 @@ import (
 	"time"
 
 	xmpp "github.com/mattn/go-xmpp"
-	zabbixapi "github.com/rombintu/zabbix-api"
 )
 
 // Return message chat-struct
@@ -243,6 +242,7 @@ func (bot *Bot) Run(data interface{}) error {
 				bot.SendError(mess, errors.New(pluginNotEnabled))
 				return nil
 			}
+
 			problems, err := bot.Plugins.Zabbix.GetProblems()
 			if err != nil || problems.Error.Message != "" {
 				bot.SendError(mess, err)
@@ -255,7 +255,7 @@ func (bot *Bot) Run(data interface{}) error {
 					ack = "Да"
 				}
 
-				clock, _ := zabbixapi.StrToTime(p.Clock)
+				clock, _ := StrToTime(p.Clock)
 
 				buff += "--------\n"
 				buff += fmt.Sprintf(

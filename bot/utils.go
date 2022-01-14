@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -122,4 +123,13 @@ func GetHash(login string) string {
 	h := sha1.New()
 	h.Write([]byte(login))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func StrToTime(timeStr string) (string, error) {
+	i, err := strconv.ParseInt(timeStr, 10, 64)
+	if err != nil {
+		return "Error", err
+	}
+	tm := time.Unix(i, 0).String()
+	return tm, nil
 }

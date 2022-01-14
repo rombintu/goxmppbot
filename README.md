@@ -12,14 +12,14 @@ edit config.toml
 make build
 ./main
 ```
-## Deploy (Docker)
+## Deploy (Docker) - v0.2.0-unstable
 ```
 docker-compose up -d
 docker-compose ps
 docker-compose logs -f bot
 ```
 
-### Mongo (dev)
+### PostgresSQL (dev)
 ```
 docker run -d \
     --name postgres \
