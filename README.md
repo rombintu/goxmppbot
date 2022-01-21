@@ -34,31 +34,58 @@ docker run -d \
 ## Configuration (Example)
 ```toml
 [DEFAULT]
-Host = "Хост учетной записи" # Example: "xmpp.mail.ru"
-Login = "Логин учетной записи"
-Password = "Пароль учетной записи" 
-DebugLevel = "Уровень дебаг-лога" # [debug, info]
-DebugOn = true или false # Включить или выключить дебаг-лог
-RefreshSecret = "1234"
+# Хост Jabber'a 
+Host = "mail.ru"
+
+# Логин и пароль от пользователя Jabber
+Login = "user@mail.ru"
+Password = ""
+
+# Дебаг уровень для логирования [debug, info]
+DebugLevel = "debug"
+DebugOn = true
+LogFile = "/var/log/mvdbot/mvdbot.log"
+
+# Через сколько минут обновлять бота
+UpdateChunk = 30
+
+# Секрет для админских команд в боте
+RefreshSecret = ""
+
+# Включенные плагины: ["zabbix"]
 Plugins = ["zabbix"]
 
+
 [SUPPORT]
-Host = "Хост почты" # Example: "mail.ru"
-Port = "Порт" # Example: "smtp"
-LoginWithoutHost = "Логин аккаунта поддержки, без хоста, от кого идут письма" # Example: "user" 
-Password = "Пароль аккаунта поддержки"
-SupportEmail = "Полный логин поддержки, куда идут письма" # Example: "user@mail.ru"
+# Хост и порт почты (поддержки)
+Host = "mail.ru"
+Port = "smtp"
+
+# Логин без хоста и пароль от пользователя поддержки
+# С этого пользователя идут письма
+LoginWithoutHost = "user" # FROM
+Password = ""
+
+# Куда идут письма
+SupportEmail = "user@mail.ru"
 
 [CONTACTS]
-URL = "Адрес до контактов" # Example: "https://mail.ru/contacts"
+# Адрес до API контактов
+URL = ""
 
-# Значение из ENV в приоритете
 [DBCONF]
+# Конфигурация для подключения к БД
 Master = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
 Slave = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
+
+# Режим разработки [true, false]
 Dev = true
+
+# Мульти-режим для БД [true, false]
 Multi = false
 
+
+# Настройка плагинов
 [ZABBIX]
 Host = ""
 User = ""
@@ -66,14 +93,19 @@ Password = ""
 ```
 
 # Tags. Fix
+v0.4.5-stable
+* Изменена система логирования
+* Зачатки CI\CD. Можно создать .deb пакет локально
+* Разработан CLI для администрирования
+
 v0.4.4 
 * Исправления в плагинах
 * Исправления в конфигурации
 * TODO - Обновление токена
 
 v0.4.3-unstable
-* Написана своя библиотека для работы с Zabbix
-* Возможность подключение плагинов
+* Разработана библиотека для работы с Zabbix
+* Добавлена возможность подключение плагинов
 * Исправления
 
 v0.4.2
@@ -83,7 +115,7 @@ v0.4.2
 v0.4.1
 * Мелкие исправления
 
-v0.4.0
+v0.4.0-unstable
 * Изменена логика запоминия предыдущих команд пользователя
 
 v0.3.2-stable

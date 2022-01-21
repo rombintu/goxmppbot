@@ -10,13 +10,13 @@ import (
 )
 
 func TestParseConfig(t *testing.T) {
-	bot := xmppbot.NewBot()
+	bot := xmppbot.NewBot("./config.toml")
 
 	fmt.Println(bot.Config)
 }
 
 func TestSendToSupport(t *testing.T) {
-	bot := xmppbot.NewBot()
+	bot := xmppbot.NewBot("./config.toml")
 	err := bot.Connect()
 	if err != nil {
 		t.Error(err)
@@ -26,7 +26,7 @@ func TestSendToSupport(t *testing.T) {
 	}
 }
 func TestSendToSupportManySymbols(t *testing.T) {
-	bot := xmppbot.NewBot()
+	bot := xmppbot.NewBot("./config.toml")
 	err := bot.Connect()
 	if err != nil {
 		t.Error(err)
@@ -37,7 +37,7 @@ func TestSendToSupportManySymbols(t *testing.T) {
 }
 
 func TestSendOOB(t *testing.T) {
-	bot := xmppbot.NewBot()
+	bot := xmppbot.NewBot("./config.toml")
 	err := bot.Connect()
 	if err != nil {
 		t.Error(err)

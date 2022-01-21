@@ -64,7 +64,7 @@ func (bot *Bot) HandleMessage() {
 }
 
 func (bot *Bot) Handler(c chan interface{}) {
-	timeCh := time.NewTicker(10 * time.Minute)
+	timeCh := time.NewTicker(bot.Config.Default.UpdateChunk * time.Minute)
 	for {
 		select {
 		case data, open := <-c:

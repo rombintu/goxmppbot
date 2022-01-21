@@ -1,28 +1,56 @@
-DEFAULT]
+[DEFAULT]
+# Хост Jabber'a 
 Host = "mail.ru"
+
+# Логин и пароль от пользователя Jabber
 Login = "user@mail.ru"
 Password = ""
-DebugLevel = "debug" # [debug, info]
+
+# Дебаг уровень для логирования [debug, info]
+DebugLevel = "debug"
 DebugOn = true
+LogFile = "/var/log/mvdbot/mvdbot.log"
+
+# Через сколько минут обновлять бота
+UpdateChunk = 30
+
+# Секрет для админских команд в боте
 RefreshSecret = ""
+
+# Включенные плагины: ["zabbix"]
 Plugins = ["zabbix"]
 
+
 [SUPPORT]
+# Хост и порт почты (поддержки)
 Host = "mail.ru"
 Port = "smtp"
+
+# Логин без хоста и пароль от пользователя поддержки
+# С этого пользователя идут письма
 LoginWithoutHost = "user" # FROM
 Password = ""
-SupportEmail = "user@mail.ru" # TO
+
+# Куда идут письма
+SupportEmail = "user@mail.ru"
 
 [CONTACTS]
+# Адрес до API контактов
 URL = ""
 
 [DBCONF]
+# Конфигурация для подключения к БД
 Master = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
 Slave = "host=localhost port=5432 user=user password=password dbname=backend sslmode=disable"
+
+# Режим разработки [true, false]
 Dev = true
+
+# Мульти режим для БД [true, false]
 Multi = false
 
+
+# Настройка плагинов
 [ZABBIX]
 Host = ""
 User = ""

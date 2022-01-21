@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,11 +11,19 @@ import (
 )
 
 func main() {
-	bot := xmppbot.NewBot()
+	cfgPath := flag.String("config", "./config.toml", "Path to config.toml")
+	help := flag.Bool("help", false, "Print help")
+	flag.Parse()
+	if *help {
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+	bot := xmppbot.NewBot(*cfgPath)
 	if err := bot.ConfigureBackand(); err != nil {
 		bot.Logger.Error(err)
 		os.Exit(1)
 	}
+
 	bot.Logger.Info("New bot was created")
 	if err := bot.Connect(); err != nil {
 		bot.Logger.Error(err)
@@ -36,6 +45,7 @@ func main() {
 	go func() {
 		<-exitCh
 		fmt.Println("Exit with 0")
+		bot.CloseLogFileOs()
 		os.Exit(0)
 	}()
 	bot.Logger.Info("Bot started")

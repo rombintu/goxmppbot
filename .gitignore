@@ -1,6 +1,9 @@
 # Trash
 .vscode
 *.tar.*
+mvdbot_amd64*
+*.log
+
 # Private
 config.toml
 plugins/zabbix-api/test.http

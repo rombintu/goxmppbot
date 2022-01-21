@@ -3,6 +3,7 @@ package bot
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	xmpp "github.com/mattn/go-xmpp"
@@ -11,13 +12,15 @@ import (
 )
 
 type Default struct {
-	Host          string   `toml:"Host"`
-	Login         string   `toml:"Login"`
-	Password      string   `toml:"Password"`
-	DebugLevel    string   `toml:"DebugLevel"`
-	DebugON       bool     `toml:"DebugOn"`
-	RefreshSecret string   `toml:"RefreshSecret"`
-	Plugins       []string `toml:"Plugins"`
+	Host          string        `toml:"Host"`
+	Login         string        `toml:"Login"`
+	Password      string        `toml:"Password"`
+	DebugLevel    string        `toml:"DebugLevel"`
+	DebugON       bool          `toml:"DebugOn"`
+	LogFile       string        `toml:"LogFile"`
+	UpdateChunk   time.Duration `toml:"UpdateChunk"`
+	RefreshSecret string        `toml:"RefreshSecret"`
+	Plugins       []string      `toml:"Plugins"`
 }
 
 type Support struct {
@@ -59,6 +62,7 @@ type Bot struct {
 	Client       *xmpp.Client
 	Config       *Config
 	Logger       *logrus.Logger
+	LogFileOS    *os.File
 	Backend      *Backend
 	LastCommands map[string]string
 	Plugins      Plugins
@@ -69,8 +73,8 @@ type Plugins struct {
 }
 
 // Return configuration
-func GetConfig() *Config {
-	confFile, err := os.ReadFile("config.toml")
+func GetConfig(cfgPath string) *Config {
+	confFile, err := os.ReadFile(cfgPath)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -85,12 +89,25 @@ func GetConfig() *Config {
 }
 
 // Return new bot
-func NewBot() *Bot {
+func NewBot(cfgPath string) *Bot {
 	return &Bot{
-		Config:       GetConfig(),
+		Config:       GetConfig(cfgPath),
 		Logger:       logrus.New(),
 		LastCommands: make(map[string]string),
 	}
+}
+
+func (bot *Bot) OpenLogFileOs() error {
+	f, err := os.OpenFile(bot.Config.Default.LogFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		return err
+	}
+	bot.LogFileOS = f
+	return nil
+}
+
+func (bot *Bot) CloseLogFileOs() error {
+	return bot.LogFileOS.Close()
 }
 
 func (bot *Bot) configureLogger() error {
@@ -98,9 +115,9 @@ func (bot *Bot) configureLogger() error {
 	if err != nil {
 		return err
 	}
-
 	bot.Logger.SetLevel(level)
-
+	bot.Logger.SetFormatter(&logrus.JSONFormatter{})
+	bot.Logger.SetOutput(bot.LogFileOS)
 	return nil
 }
 
@@ -140,11 +157,15 @@ func (bot *Bot) ReConnnect() error {
 
 // Try connect to server
 func (bot *Bot) Connect() error {
+	if err := bot.OpenLogFileOs(); err != nil {
+		return err
+	}
 	err := bot.configureLogger()
 	if err != nil {
 		bot.Logger.Error("Error configure logger: ", err.Error())
 		return err
 	}
+
 	client, err := xmpp.NewClientNoTLS(
 		bot.Config.Default.Host,
 		bot.Config.Default.Login,
